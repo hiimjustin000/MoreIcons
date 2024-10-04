@@ -37,27 +37,43 @@ void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::st
         auto path = entry.path();
         if (path.extension() != ".plist") continue;
 
+        auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
         auto pathFilename = path.filename().string();
+        auto fileQuality = kTextureQualityLow;
         if (pathFilename.find("-uhd.plist") != std::string::npos) {
-            log::warn("Ignoring UHD plist file: {}", pathFilename);
-            continue;
+            auto hdExists = std::filesystem::exists(string::replace(path.string(), "-uhd.plist", "-hd.plist"));
+            if (hdExists || textureQuality != kTextureQualityHigh) {
+                if (!hdExists) log::warn("Ignoring too high quality plist file: {}", pathFilename);
+                continue;
+            }
+            else {
+                fileQuality = kTextureQualityHigh;
+                log::info("Loading UHD plist file: {}", pathFilename);
+            }
         }
         else if (pathFilename.find("-hd.plist") != std::string::npos) {
-            log::warn("Ignoring HD plist file: {}", pathFilename);
-            continue;
+            auto sdExists = std::filesystem::exists(string::replace(path.string(), "-hd.plist", ".plist"));
+            if (sdExists || (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium)) {
+                if (!sdExists) log::warn("Ignoring too high quality plist file: {}", pathFilename);
+                continue;
+            }
+            else {
+                fileQuality = kTextureQualityMedium;
+                log::info("Loading HD plist file: {}", pathFilename);
+            }
         }
         else log::info("Loading plist file: {}", pathFilename);
 
         auto plistPath = path.string();
-        auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
-        auto possibleUHD = string::replace(plistPath, ".plist", "-uhd.plist");
-        auto possibleHD = string::replace(plistPath, ".plist", "-hd.plist");
-        auto usedTextureQuality = TextureQuality::kTextureQualityLow;
-        if (textureQuality == kTextureQualityHigh && std::filesystem::exists(possibleUHD)) {
+        auto noGraphicPlistPath = string::replace(string::replace(plistPath, "-uhd.plist", ".plist"), "-hd.plist", ".plist");
+        auto possibleUHD = string::replace(noGraphicPlistPath, ".plist", "-uhd.plist");
+        auto possibleHD = string::replace(noGraphicPlistPath, ".plist", "-hd.plist");
+        auto usedTextureQuality = kTextureQualityLow;
+        if (textureQuality == kTextureQualityHigh && (fileQuality == kTextureQualityHigh || std::filesystem::exists(possibleUHD))) {
             plistPath = possibleUHD;
             usedTextureQuality = kTextureQualityHigh;
         }
-        else if (textureQuality == kTextureQualityMedium && std::filesystem::exists(possibleHD)) {
+        else if (textureQuality == kTextureQualityMedium && (fileQuality == kTextureQualityMedium || std::filesystem::exists(possibleHD))) {
             plistPath = possibleHD;
             usedTextureQuality = kTextureQualityMedium;
         }
@@ -69,14 +85,14 @@ void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::st
         }
         dict->setObject(frames, "frames");
         auto metadata = static_cast<CCDictionary*>(dict->objectForKey("metadata"));
-        auto fullTexturePath = (path.parent_path() / metadata->valueForKey("textureFileName")->getCString()).string();
+        auto fullTexturePath = (path.parent_path() / std::filesystem::path(metadata->valueForKey("textureFileName")->getCString()).filename()).string();
         if (!std::filesystem::exists(fullTexturePath)) {
             log::warn("Texture file not found: {}", fullTexturePath);
             continue;
         }
         _addSpriteFramesWithDictionary(dict, textureCache->addImage(fullTexturePath.c_str(), false));
         dict->release();
-        auto name = path.stem().string();
+        auto name = std::filesystem::path(noGraphicPlistPath).stem().string();
         list.push_back(name);
         textures.emplace(name, fullTexturePath);
     }

@@ -1,4 +1,8 @@
 # More Icons Changelog
+## v1.0.2 (2024-10-04)
+- Added support for excluding lower-quality spritesheets and atlases
+- Ignored directories in spritesheet texture names
+
 ## v1.0.1 (2024-10-04)
 - Fixed texture reloading not working
 - (Maybe, possibly) Fixed an incompatibility with the mod "Animated Profile Icons" by TheSillyDoggo
