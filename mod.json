@@ -1,0 +1,34 @@
+{
+    "geode": "3.8.1",
+    "gd": {
+        "android": "2.206",
+        "win": "2.206",
+        "mac": "2.206"
+    },
+    "version": "v1.0.0",
+    "id": "hiimjustin000.more_icons",
+    "name": "More Icons",
+    "developer": "hiimjustin000",
+    "description": "A mod that adds more icon slots.",
+    "dependencies": [
+        {
+            "id": "geode.node-ids",
+            "version": ">=v1.12.0",
+            "importance": "required"
+        }
+    ],
+    "links": {
+        "community": "https://discord.gg/QVKmbvBXA7",
+        "source": "https://github.com/hiimjustin000/MoreIcons",
+        "homepage": "https://www.hiimjustin000.com"
+    },
+    "tags": [
+        "content",
+        "customization",
+        "enhancement",
+        "gameplay",
+        "interface",
+        "modtober24",
+        "offline"
+    ]
+}
