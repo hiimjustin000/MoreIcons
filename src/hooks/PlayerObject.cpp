@@ -42,8 +42,9 @@ class $modify(MIPlayerObject, PlayerObject) {
         m_iconGlow->setDisplayFrame(spriteFrameCache->spriteFrameByName(iconGlow.c_str()));
 
         auto iconExtraFrame = spriteFrameCache->spriteFrameByName(iconExtra.c_str());
-        m_iconSpriteWhitener->setVisible(iconExtraFrame != nullptr && iconExtraFrame->getFrameName() != "geode.texture-loader/fallback.png");
-        if (iconExtraFrame) {
+        auto extraVisible = MoreIcons::doesExist(iconExtraFrame);
+        m_iconSpriteWhitener->setVisible(extraVisible);
+        if (extraVisible) {
             m_iconSpriteWhitener->setDisplayFrame(iconExtraFrame);
             m_iconSpriteWhitener->setPosition(m_iconSprite->getContentSize() / 2);
         }
@@ -71,8 +72,9 @@ class $modify(MIPlayerObject, PlayerObject) {
         m_vehicleGlow->setDisplayFrame(spriteFrameCache->spriteFrameByName(shipGlow.c_str()));
 
         auto shipExtraFrame = spriteFrameCache->spriteFrameByName(shipExtra.c_str());
-        m_vehicleSpriteWhitener->setVisible(shipExtraFrame != nullptr && shipExtraFrame->getFrameName() != "geode.texture-loader/fallback.png");
-        if (shipExtraFrame) {
+        auto extraVisible = MoreIcons::doesExist(shipExtraFrame);
+        m_vehicleSpriteWhitener->setVisible(extraVisible);
+        if (extraVisible) {
             m_vehicleSpriteWhitener->setDisplayFrame(shipExtraFrame);
             m_vehicleSpriteWhitener->setPosition(m_vehicleSprite->getContentSize() / 2);
         }
@@ -100,8 +102,9 @@ class $modify(MIPlayerObject, PlayerObject) {
         m_iconGlow->setDisplayFrame(spriteFrameCache->spriteFrameByName(ballGlow.c_str()));
 
         auto ballExtraFrame = spriteFrameCache->spriteFrameByName(ballExtra.c_str());
-        m_iconSpriteWhitener->setVisible(ballExtraFrame != nullptr && ballExtraFrame->getFrameName() != "geode.texture-loader/fallback.png");
-        if (ballExtraFrame) {
+        auto extraVisible = MoreIcons::doesExist(ballExtraFrame);
+        m_iconSpriteWhitener->setVisible(extraVisible);
+        if (extraVisible) {
             m_iconSpriteWhitener->setDisplayFrame(ballExtraFrame);
             m_iconSpriteWhitener->setPosition(m_iconSprite->getContentSize() / 2);
         }
@@ -132,8 +135,9 @@ class $modify(MIPlayerObject, PlayerObject) {
         m_vehicleGlow->setDisplayFrame(spriteFrameCache->spriteFrameByName(ufoGlow.c_str()));
 
         auto ufoExtraFrame = spriteFrameCache->spriteFrameByName(ufoExtra.c_str());
-        m_vehicleSpriteWhitener->setVisible(ufoExtraFrame != nullptr && ufoExtraFrame->getFrameName() != "geode.texture-loader/fallback.png");
-        if (ufoExtraFrame) {
+        auto extraVisible = MoreIcons::doesExist(ufoExtraFrame);
+        m_vehicleSpriteWhitener->setVisible(extraVisible);
+        if (extraVisible) {
             m_vehicleSpriteWhitener->setDisplayFrame(ufoExtraFrame);
             m_vehicleSpriteWhitener->setPosition(m_vehicleSprite->getContentSize() / 2);
         }
@@ -161,8 +165,9 @@ class $modify(MIPlayerObject, PlayerObject) {
         m_iconGlow->setDisplayFrame(spriteFrameCache->spriteFrameByName(waveGlow.c_str()));
 
         auto waveExtraFrame = spriteFrameCache->spriteFrameByName(waveExtra.c_str());
-        m_iconSpriteWhitener->setVisible(waveExtraFrame != nullptr && waveExtraFrame->getFrameName() != "geode.texture-loader/fallback.png");
-        if (waveExtraFrame) {
+        auto extraVisible = MoreIcons::doesExist(waveExtraFrame);
+        m_iconSpriteWhitener->setVisible(extraVisible);
+        if (extraVisible) {
             m_iconSpriteWhitener->setDisplayFrame(waveExtraFrame);
             m_iconSpriteWhitener->setPosition(m_iconSprite->getContentSize() / 2);
         }
@@ -190,8 +195,9 @@ class $modify(MIPlayerObject, PlayerObject) {
         m_iconGlow->setDisplayFrame(spriteFrameCache->spriteFrameByName(swingGlow.c_str()));
 
         auto swingExtraFrame = spriteFrameCache->spriteFrameByName(swingExtra.c_str());
-        m_iconSpriteWhitener->setVisible(swingExtraFrame != nullptr && swingExtraFrame->getFrameName() != "geode.texture-loader/fallback.png");
-        if (swingExtraFrame) {
+        auto extraVisible = MoreIcons::doesExist(swingExtraFrame);
+        m_iconSpriteWhitener->setVisible(extraVisible);
+        if (extraVisible) {
             m_iconSpriteWhitener->setDisplayFrame(swingExtraFrame);
             m_iconSpriteWhitener->setPosition(m_iconSprite->getContentSize() / 2);
         }
@@ -219,8 +225,9 @@ class $modify(MIPlayerObject, PlayerObject) {
         m_vehicleGlow->setDisplayFrame(spriteFrameCache->spriteFrameByName(jetpackGlow.c_str()));
 
         auto jetpackExtraFrame = spriteFrameCache->spriteFrameByName(jetpackExtra.c_str());
-        m_vehicleSpriteWhitener->setVisible(jetpackExtraFrame != nullptr && jetpackExtraFrame->getFrameName() != "geode.texture-loader/fallback.png");
-        if (jetpackExtraFrame) {
+        auto extraVisible = MoreIcons::doesExist(jetpackExtraFrame);
+        m_vehicleSpriteWhitener->setVisible(extraVisible);
+        if (extraVisible) {
             m_vehicleSpriteWhitener->setDisplayFrame(jetpackExtraFrame);
             m_vehicleSpriteWhitener->setPosition(m_vehicleSprite->getContentSize() / 2);
         }

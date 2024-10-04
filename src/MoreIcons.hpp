@@ -49,8 +49,13 @@ public:
     }
 
     static void loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::unordered_map<std::string, std::string>& textures);
-    static void changeSimplePlayer(SimplePlayer*, IconType);
+    static void changeSimplePlayer(SimplePlayer* player, IconType type) {
+        changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);
+    }
     static void changeSimplePlayer(SimplePlayer*, const std::string&, IconType);
+    static bool doesExist(cocos2d::CCSpriteFrame* frame) {
+        return frame != nullptr && frame->getTag() != 105871529;
+    }
 
     static std::vector<std::string>& vectorForType(IconType type) {
         switch (type) {

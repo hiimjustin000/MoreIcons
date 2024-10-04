@@ -92,10 +92,6 @@ void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::st
     }
 }
 
-void MoreIcons::changeSimplePlayer(SimplePlayer* player, IconType type) {
-    changeSimplePlayer(player, Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);
-}
-
 void MoreIcons::changeSimplePlayer(SimplePlayer* player, const std::string& file, IconType iconType) {
     if (iconType == IconType::Robot) {
         static_cast<MIRobotSprite*>(player->m_robotSprite)->useCustomRobot(file);
@@ -151,7 +147,7 @@ void MoreIcons::changeSimplePlayer(SimplePlayer* player, const std::string& file
         player->m_birdDome->setPosition(firstCenter);
     }
     auto extraFrame = sfc->spriteFrameByName(iconExtra.c_str());
-    auto extraVisible = extraFrame != nullptr && extraFrame->getFrameName() != "geode.texture-loader/fallback.png";
+    auto extraVisible = doesExist(extraFrame);
     player->m_detailSprite->setVisible(extraVisible);
     if (extraVisible) {
         player->m_detailSprite->setDisplayFrame(extraFrame);

@@ -43,9 +43,8 @@ void MIRobotSprite::useCustom(std::string file) {
 
         if (spritePart == m_headSprite) {
             auto extraFrame = spriteFrameCache->spriteFrameByName(spriteExtraFrame.c_str());
-            auto hasExtra = false;
-            if (extraFrame && extraFrame->getFrameName() != "geode.texture-loader/fallback.png") {
-                hasExtra = true;
+            auto hasExtra = MoreIcons::doesExist(extraFrame);
+            if (hasExtra) {
                 if (m_extraSprite) m_extraSprite->setDisplayFrame(extraFrame);
                 else {
                     m_extraSprite = CCSprite::createWithSpriteFrame(extraFrame);

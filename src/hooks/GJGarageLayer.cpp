@@ -86,20 +86,25 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     void onSelectTab(CCObject* sender) {
         GJGarageLayer::onSelectTab(sender);
 
-        if (m_fields->m_custom && !MoreIcons::vectorForType(m_iconType).empty()) setupCustomPage(0);
+        if (m_fields->m_custom) setupCustomPage(0);
 
         createNavMenu();
     }
 
     void setupCustomPage(int page) {
+        auto& vec = MoreIcons::vectorForType(m_iconType);
+        auto f = m_fields.self();
+        if (vec.empty()) {
+            if (f->m_pageBar) f->m_pageBar->setVisible(false);
+            return;
+        }
+
         m_iconSelection->setVisible(false);
 
-        auto f = m_fields.self();
         f->m_custom = true;
         f->m_page = MoreIcons::wrapPage(m_iconType, page);
         createNavMenu();
 
-        auto& vec = MoreIcons::vectorForType(m_iconType);
         m_leftArrow->setVisible(vec.size() > 36);
         m_rightArrow->setVisible(vec.size() > 36);
 
