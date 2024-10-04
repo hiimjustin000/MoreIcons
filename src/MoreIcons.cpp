@@ -99,6 +99,8 @@ void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::st
 }
 
 void MoreIcons::changeSimplePlayer(SimplePlayer* player, const std::string& file, IconType iconType) {
+    if (!player) return;
+
     if (iconType == IconType::Robot) {
         static_cast<MIRobotSprite*>(player->m_robotSprite)->useCustomRobot(file);
         return;

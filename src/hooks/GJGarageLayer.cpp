@@ -48,6 +48,17 @@ class $modify(MIGarageLayer, GJGarageLayer) {
 
         auto& vec = MoreIcons::vectorForType(m_iconType);
         m_navDotMenu->setPositionY(vec.empty() ? 25.0f : 35.0f);
+        if (GameManager::get()->countForType(m_iconType) <= 36) {
+            m_navDotMenu->setVisible(true);
+            m_navDotMenu->setEnabled(true);
+            m_navDotMenu->removeAllChildren();
+            auto firstDot = static_cast<CCMenuItemSpriteExtra*>(m_pageButtons->objectAtIndex(0));
+            static_cast<CCSprite*>(firstDot->getNormalImage())->setDisplayFrame(CCSpriteFrameCache::get()->spriteFrameByName(
+                f->m_custom && !vec.empty() ? "gj_navDotBtn_off_001.png" : "gj_navDotBtn_on_001.png"
+            ));
+            m_navDotMenu->addChild(firstDot);
+            m_navDotMenu->updateLayout();
+        }
         f->m_navMenu->setVisible(!vec.empty());
         if (vec.empty()) return;
 
@@ -120,7 +131,8 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         }
 
         auto winSize = CCDirector::get()->getWinSize();
-        auto unlockType = GameManager::get()->iconTypeToUnlockType(m_iconType);
+        auto gameManager = GameManager::get();
+        auto unlockType = gameManager->iconTypeToUnlockType(m_iconType);
         auto playerSquare = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
         auto objs = CCArray::create();
         CCMenuItemSpriteExtra* current = nullptr;
@@ -130,13 +142,13 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             auto itemIcon = GJItemIcon::createBrowserItem(unlockType, 1);
             itemIcon->setScale(GJItemIcon::scaleForType(unlockType));
             MoreIcons::changeSimplePlayer(itemIcon->m_player, name, m_iconType);
-            auto iconButton = CCMenuItemExt::createSpriteExtra(itemIcon, [this, f, name, savedType](CCMenuItemSpriteExtra* sender) {
+            auto iconButton = CCMenuItemExt::createSpriteExtra(itemIcon, [this, f, name, savedType, gameManager](CCMenuItemSpriteExtra* sender) {
                 Mod::get()->setSavedValue<std::string>(savedType, name);
                 m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
                 m_cursor1->setVisible(true);
                 m_playerObject->updatePlayerFrame(1, m_iconType);
                 MoreIcons::changeSimplePlayer(m_playerObject, name, m_iconType);
-                GameManager::get()->m_playerIconType = m_iconType;
+                gameManager->m_playerIconType = m_iconType;
                 m_playerObject->setScale(m_iconType == IconType::Jetpack ? 1.5f : 1.6f);
             });
             iconButton->setContentSize(playerSquare->getContentSize());

@@ -10,12 +10,6 @@ class $modify(MIPlayerObject, PlayerObject) {
         if (!gameLayer || (gameLayer->m_player1 && gameLayer->m_player2)) return true;
 
         useCustomIcon();
-        useCustomShip();
-        useCustomBall();
-        useCustomUfo();
-        useCustomWave();
-        useCustomSwing();
-        useCustomJetpack();
 
         return true;
     }

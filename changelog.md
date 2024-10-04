@@ -1,4 +1,8 @@
 # More Icons Changelog
+## v1.0.3 (2024-10-04)
+- Fixed a bug where selecting a ball, wave, or swing icon would change the cube icon
+- Fixed a bug where the jetpack menu would not show the first row of navigation dots
+
 ## v1.0.2 (2024-10-04)
 - Added support for excluding lower-quality spritesheets and atlases
 - Ignored directories in spritesheet texture names
