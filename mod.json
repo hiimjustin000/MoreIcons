@@ -9,7 +9,7 @@
     "id": "hiimjustin000.more_icons",
     "name": "More Icons",
     "developer": "hiimjustin000",
-    "description": "A mod that adds more icon slots.",
+    "description": "A mod that loads custom icons.",
     "dependencies": [
         {
             "id": "geode.node-ids",

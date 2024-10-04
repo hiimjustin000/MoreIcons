@@ -1,5 +1,5 @@
 # More Icons
-A mod that adds more icon slots.
+A mod that loads custom icons.
 
 ## Adding Icons
 To add a custom icon, you need an icon spritesheet (.plist) and an icon atlas (.png).
