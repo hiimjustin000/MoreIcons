@@ -137,12 +137,18 @@ public:
 
     static std::vector<std::string> getPage(IconType type, int page) {
         auto& vec = vectorForType(type);
+        if (vec.size() <= page * 36) return {};
         return std::vector<std::string>(vec.begin() + page * 36, vec.begin() + std::min((int)vec.size(), (page + 1) * 36));
     }
 
     static int wrapPage(IconType type, int page) {
+        auto pages = (vectorForType(type).size() + 35) / 36;
+        return pages > 0 ? page < 0 ? pages - 1 : page >= pages ? 0 : page : 0;
+    }
+
+    static int findIconPage(IconType type) {
         auto& vec = vectorForType(type);
-        auto pages = (vec.size() + 35) / 36;
-        return page < 0 ? pages - 1 : page >= pages ? 0 : page;
+        auto it = std::find(vec.begin(), vec.end(), geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""));
+        return it == vec.end() ? 0 : (it - vec.begin()) / 36;
     }
 };

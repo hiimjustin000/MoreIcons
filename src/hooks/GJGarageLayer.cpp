@@ -7,9 +7,14 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     struct Fields {
         ListButtonBar* m_pageBar;
         CCMenu* m_navMenu;
+        std::map<IconType, int> m_pages;
         int m_page;
         bool m_custom;
     };
+
+    static void onModify(auto& self) {
+        (void)self.setHookPriority("GJGarageLayer::setupPage", 1);
+    }
 
     bool init() {
         if (!GJGarageLayer::init()) return false;
@@ -43,7 +48,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             f->m_navMenu->setLayout(RowLayout::create()->setGap(6.0f)->setAxisAlignment(AxisAlignment::Center));
             f->m_navMenu->setContentSize({ winSize.width - 60.0f, 20.0f });
             f->m_navMenu->setID("navdot-menu"_spr);
-            addChild(f->m_navMenu);
+            addChild(f->m_navMenu, 1);
         }
 
         auto& vec = MoreIcons::vectorForType(m_iconType);
@@ -68,9 +73,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             auto dot = CCMenuItemExt::createSpriteExtraWithFrameName(
                 f->m_custom && i == f->m_page ? "gj_navDotBtn_on_001.png" : "gj_navDotBtn_off_001.png",
                 0.9f,
-                [this, i](auto) {
-                    setupCustomPage(i);
-                }
+                [this, i](auto) { setupCustomPage(i); }
             );
             dot->setSizeMult(1.1f);
             f->m_navMenu->addChild(dot);
@@ -79,14 +82,20 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         f->m_navMenu->updateLayout();
     }
 
-    void onNavigate(CCObject* sender) {
-        GJGarageLayer::onNavigate(sender);
+    void setupPage(int page, IconType type) {
+        GJGarageLayer::setupPage(page, type);
 
         auto f = m_fields.self();
         if (f->m_pageBar) {
-            f->m_custom = false;
-            f->m_pageBar->setVisible(false);
+            f->m_pageBar->removeFromParent();
+            f->m_pageBar = nullptr;
         }
+    }
+
+    void onNavigate(CCObject* sender) {
+        GJGarageLayer::onNavigate(sender);
+
+        m_fields->m_custom = false;
 
         createNavMenu();
     }
@@ -96,23 +105,26 @@ class $modify(MIGarageLayer, GJGarageLayer) {
 
         auto f = m_fields.self();
         if (f->m_custom) setupCustomPage(f->m_page + sender->getTag());
-
-        createNavMenu();
+        else createNavMenu();
     }
 
     void onSelectTab(CCObject* sender) {
         GJGarageLayer::onSelectTab(sender);
 
-        if (m_fields->m_custom) setupCustomPage(0);
-
-        createNavMenu();
+        auto f = m_fields.self();
+        if (f->m_custom) setupCustomPage(f->m_pages.contains(m_iconType) ? f->m_pages[m_iconType] : MoreIcons::findIconPage(m_iconType));
+        else createNavMenu();
     }
 
     void setupCustomPage(int page) {
         auto& vec = MoreIcons::vectorForType(m_iconType);
         auto f = m_fields.self();
+        if (f->m_pageBar) {
+            f->m_pageBar->removeFromParent();
+            f->m_pageBar = nullptr;
+        }
         if (vec.empty()) {
-            if (f->m_pageBar) f->m_pageBar->setVisible(false);
+            createNavMenu();
             return;
         }
 
@@ -120,6 +132,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
 
         f->m_custom = true;
         f->m_page = MoreIcons::wrapPage(m_iconType, page);
+        f->m_pages[m_iconType] = f->m_page;
         createNavMenu();
 
         m_leftArrow->setVisible(vec.size() > 36);
@@ -158,15 +171,10 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             if (name == Mod::get()->getSavedValue<std::string>(savedType, "")) current = iconButton;
         }
 
-        if (f->m_pageBar) {
-            f->m_pageBar->removeFromParent();
-            f->m_pageBar = nullptr;
-        }
-
         f->m_pageBar = ListButtonBar::create(objs, winSize / 2 - CCPoint { 0.0f, 65.0f }, 12, 3, 5.0f, 5.0f, 25.0f, 220.0f, 1);
         f->m_pageBar->m_scrollLayer->togglePageIndicators(false);
         f->m_pageBar->setID("icon-selection-bar"_spr);
-        addChild(f->m_pageBar, 100);
+        addChild(f->m_pageBar, 101);
 
         m_cursor1->setVisible(current != nullptr);
         if (current) m_cursor1->setPosition(current->getParent()->convertToWorldSpace(current->getPosition()));

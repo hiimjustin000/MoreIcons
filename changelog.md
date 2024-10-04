@@ -1,4 +1,8 @@
 # More Icons Changelog
+## v1.0.4 (2024-10-04)
+- Fixed pages resetting when selecting a new tab
+- Fixed a bug where the game would crash when selecting the death effect tab
+
 ## v1.0.3 (2024-10-04)
 - Fixed a bug where selecting a ball, wave, or swing icon would change the cube icon
 - Fixed a bug where the jetpack menu would not show the first row of navigation dots
