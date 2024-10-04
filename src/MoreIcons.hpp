@@ -48,6 +48,32 @@ public:
         return !JETPACKS.empty() && std::find(JETPACKS.begin(), JETPACKS.end(), name) != JETPACKS.end();
     }
 
+    static void clear() {
+        ICONS.clear();
+        SHIPS.clear();
+        BALLS.clear();
+        UFOS.clear();
+        WAVES.clear();
+        ROBOTS.clear();
+        ROBOT_TEXTURES.clear();
+        SPIDERS.clear();
+        SPIDER_TEXTURES.clear();
+        SWINGS.clear();
+        JETPACKS.clear();
+    }
+    static void load() {
+        auto configDir = geode::Mod::get()->getConfigDir();
+        std::unordered_map<std::string, std::string> tempMap;
+        loadIcons(configDir / "icon", ICONS, tempMap);
+        loadIcons(configDir / "ship", SHIPS, tempMap);
+        loadIcons(configDir / "ball", BALLS, tempMap);
+        loadIcons(configDir / "ufo", UFOS, tempMap);
+        loadIcons(configDir / "wave", WAVES, tempMap);
+        loadIcons(configDir / "robot", ROBOTS, ROBOT_TEXTURES);
+        loadIcons(configDir / "spider", SPIDERS, SPIDER_TEXTURES);
+        loadIcons(configDir / "swing", SWINGS, tempMap);
+        loadIcons(configDir / "jetpack", JETPACKS, tempMap);
+    }
     static void loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::unordered_map<std::string, std::string>& textures);
     static void changeSimplePlayer(SimplePlayer* player, IconType type) {
         changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);
@@ -111,7 +137,7 @@ public:
 
     static std::vector<std::string> getPage(IconType type, int page) {
         auto& vec = vectorForType(type);
-        return std::vector<std::string>(vec.begin() + page * 36, vec.begin() + std::min(36, (int)vec.size() - page * 36));
+        return std::vector<std::string>(vec.begin() + page * 36, vec.begin() + std::min((int)vec.size(), (page + 1) * 36));
     }
 
     static int wrapPage(IconType type, int page) {

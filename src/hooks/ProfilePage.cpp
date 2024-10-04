@@ -9,22 +9,25 @@ class $modify(MIProfilePage, ProfilePage) {
 
         if (!m_ownProfile) return;
 
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-icon"), 0), IconType::Cube);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-ship"), 0), IconType::Ship);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-ball"), 0), IconType::Ball);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-ufo"), 0), IconType::Ufo);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-wave"), 0), IconType::Wave);
+        auto playerMenu = m_mainLayer->getChildByID("player-menu");
+        if (!playerMenu) return;
+
+        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-icon"), 0), IconType::Cube);
+        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-ship"), 0), IconType::Ship);
+        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-ball"), 0), IconType::Ball);
+        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-ufo"), 0), IconType::Ufo);
+        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-wave"), 0), IconType::Wave);
         if (Loader::get()->isModLoaded("thesillydoggo.animatedprofiles") && !Loader::get()->isModLoaded("rynat.better_unlock_info")) {
             MoreIcons::changeSimplePlayer(
-                getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-robot")->getChildByID("player-robot"), 0), IconType::Robot);
+                getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-robot")->getChildByID("player-robot"), 0), IconType::Robot);
             MoreIcons::changeSimplePlayer(
-                getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-spider")->getChildByID("player-spider"), 0), IconType::Spider);
+                getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-spider")->getChildByID("player-spider"), 0), IconType::Spider);
         } else {
-            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-robot"), 0), IconType::Robot);
-            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-spider"), 0), IconType::Spider);
+            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-robot"), 0), IconType::Robot);
+            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-spider"), 0), IconType::Spider);
         }
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(m_mainLayer->getChildByIDRecursive("player-swing"), 0), IconType::Swing);
-        if (auto playerJetpack = m_mainLayer->getChildByIDRecursive("player-jetpack"))
+        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-swing"), 0), IconType::Swing);
+        if (auto playerJetpack = playerMenu->getChildByID("player-jetpack"))
             MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerJetpack, 0), IconType::Jetpack);
     }
 

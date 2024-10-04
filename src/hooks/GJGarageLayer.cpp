@@ -28,6 +28,12 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         Mod::get()->setSavedValue<std::string>(MoreIcons::savedForType(m_iconType), "");
     }
 
+    void updatePlayerColors() {
+        GJGarageLayer::updatePlayerColors();
+
+        if (m_iconSelection && m_fields->m_custom && !MoreIcons::vectorForType(m_iconType).empty()) m_iconSelection->setVisible(true);
+    }
+
     void createNavMenu() {
         auto f = m_fields.self();
         auto winSize = CCDirector::get()->getWinSize();

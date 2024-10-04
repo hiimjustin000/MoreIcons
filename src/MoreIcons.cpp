@@ -4,17 +4,7 @@
 using namespace geode::prelude;
 
 $on_mod(Loaded) {
-    auto configDir = Mod::get()->getConfigDir();
-    std::unordered_map<std::string, std::string> tempMap;
-    MoreIcons::loadIcons(configDir / "icon", MoreIcons::ICONS, tempMap);
-    MoreIcons::loadIcons(configDir / "ship", MoreIcons::SHIPS, tempMap);
-    MoreIcons::loadIcons(configDir / "ball", MoreIcons::BALLS, tempMap);
-    MoreIcons::loadIcons(configDir / "ufo", MoreIcons::UFOS, tempMap);
-    MoreIcons::loadIcons(configDir / "wave", MoreIcons::WAVES, tempMap);
-    MoreIcons::loadIcons(configDir / "robot", MoreIcons::ROBOTS, MoreIcons::ROBOT_TEXTURES);
-    MoreIcons::loadIcons(configDir / "spider", MoreIcons::SPIDERS, MoreIcons::SPIDER_TEXTURES);
-    MoreIcons::loadIcons(configDir / "swing", MoreIcons::SWINGS, tempMap);
-    MoreIcons::loadIcons(configDir / "jetpack", MoreIcons::JETPACKS, tempMap);
+    MoreIcons::load();
 }
 
 // https://github.com/GlobedGD/globed2/blob/v1.6.2/src/util/cocos.cpp#L44
