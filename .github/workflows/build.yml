@@ -36,6 +36,8 @@ jobs:
       - name: Build the mod
         uses: geode-sdk/build-geode-mod@main
         with:
+          bindings: hiimjustin000/bindings
+          bindings-ref: more-icons
           build-config: ${{ matrix.config.build-config || 'Release' }}
           export-pdb: true
           combine: true
