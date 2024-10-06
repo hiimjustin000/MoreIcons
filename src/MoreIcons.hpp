@@ -50,16 +50,25 @@ public:
 
     static void clear() {
         ICONS.clear();
+        geode::Mod::get()->setSavedValue("icons", ICONS);
         SHIPS.clear();
+        geode::Mod::get()->setSavedValue("ships", SHIPS);
         BALLS.clear();
+        geode::Mod::get()->setSavedValue("balls", BALLS);
         UFOS.clear();
+        geode::Mod::get()->setSavedValue("ufos", UFOS);
         WAVES.clear();
+        geode::Mod::get()->setSavedValue("waves", WAVES);
         ROBOTS.clear();
         ROBOT_TEXTURES.clear();
+        geode::Mod::get()->setSavedValue("robots", ROBOTS);
         SPIDERS.clear();
         SPIDER_TEXTURES.clear();
+        geode::Mod::get()->setSavedValue("spiders", SPIDERS);
         SWINGS.clear();
+        geode::Mod::get()->setSavedValue("swings", SWINGS);
         JETPACKS.clear();
+        geode::Mod::get()->setSavedValue("jetpacks", JETPACKS);
     }
     static void load() {
         auto configDir = geode::Mod::get()->getConfigDir();
@@ -81,6 +90,16 @@ public:
     static void changeSimplePlayer(SimplePlayer*, const std::string&, IconType);
     static bool doesExist(cocos2d::CCSpriteFrame* frame) {
         return frame != nullptr && frame->getTag() != 105871529;
+    }
+    static std::string getDual(const std::string& name, bool dual) {
+        return geode::Loader::get()->isModLoaded("weebify.separate_dual_icons") && dual ? name + "-dual" : name;
+    }
+    static void swapDual(const std::string& name) {
+        auto dualName = name + "-dual";
+        auto normalIcon = geode::Mod::get()->getSavedValue<std::string>(name, "");
+        auto dualIcon = geode::Mod::get()->getSavedValue<std::string>(dualName, "");
+        geode::Mod::get()->setSavedValue(name, dualIcon);
+        geode::Mod::get()->setSavedValue(dualName, normalIcon);
     }
 
     static std::vector<std::string>& vectorForType(IconType type) {
@@ -111,28 +130,26 @@ public:
     }
 
     static std::string savedForType(IconType type) {
+        auto sdi = geode::Loader::get()->getLoadedMod("weebify.separate_dual_icons");
+        return savedForType(type, sdi && sdi->getSavedValue("2pselected", false));
+    }
+
+    static std::string savedForType(IconType type, bool dual) {
+        std::string prefix;
         switch (type) {
-            case IconType::Cube:
-                return "icon";
-            case IconType::Ship:
-                return "ship";
-            case IconType::Ball:
-                return "ball";
-            case IconType::Ufo:
-                return "ufo";
-            case IconType::Wave:
-                return "wave";
-            case IconType::Robot:
-                return "robot";
-            case IconType::Spider:
-                return "spider";
-            case IconType::Swing:
-                return "swing";
-            case IconType::Jetpack:
-                return "jetpack";
-            default:
-                return "";
+            case IconType::Cube: prefix = "icon"; break;
+            case IconType::Ship: prefix = "ship"; break;
+            case IconType::Ball: prefix = "ball"; break;
+            case IconType::Ufo: prefix = "ufo"; break;
+            case IconType::Wave: prefix = "wave"; break;
+            case IconType::Robot: prefix = "robot"; break;
+            case IconType::Spider: prefix = "spider"; break;
+            case IconType::Swing: prefix = "swing"; break;
+            case IconType::Jetpack: prefix = "jetpack"; break;
+            default: prefix = ""; break;
         }
+
+        return getDual(prefix, dual);
     }
 
     static std::vector<std::string> getPage(IconType type, int page) {

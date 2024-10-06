@@ -1,4 +1,9 @@
 # More Icons Changelog
+## v1.1.0 (2024-10-06)
+- Added support for Separate Dual Icons
+- Added loaded icon list in saved.json
+- Added icon popups when selecting an icon
+
 ## v1.0.4 (2024-10-04)
 - Fixed pages resetting when selecting a new tab
 - Fixed a bug where the game would crash when selecting the death effect tab

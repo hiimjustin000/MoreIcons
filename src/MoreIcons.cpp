@@ -96,17 +96,19 @@ void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::st
         list.push_back(name);
         textures.emplace(name, fullTexturePath);
     }
+
+    Mod::get()->setSavedValue(path.filename().string() + "s", list);
 }
 
 void MoreIcons::changeSimplePlayer(SimplePlayer* player, const std::string& file, IconType iconType) {
     if (!player) return;
 
     if (iconType == IconType::Robot) {
-        static_cast<MIRobotSprite*>(player->m_robotSprite)->useCustomRobot(file);
+        MIRobotSprite::useCustomRobot(player->m_robotSprite, file);
         return;
     }
     else if (iconType == IconType::Spider) {
-        static_cast<MIRobotSprite*>(static_cast<GJRobotSprite*>(player->m_spiderSprite))->useCustomSpider(file);
+        MIRobotSprite::useCustomSpider(player->m_spiderSprite, file);
         return;
     }
 

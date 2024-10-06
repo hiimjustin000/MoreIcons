@@ -4,6 +4,11 @@ using namespace geode::prelude;
 
 #include <Geode/modify/CharacterColorPage.hpp>
 class $modify(MICharacterColorPage, CharacterColorPage) {
+    static void onModify(auto& self) {
+        (void)self.setHookPriority("CharacterColorPage::init", -1);
+        (void)self.setHookPriority("CharacterColorPage::toggleShip", -1);
+    }
+
     bool init() {
         if (!CharacterColorPage::init()) return false;
 

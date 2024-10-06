@@ -1,4 +1,5 @@
 #include "../MoreIcons.hpp"
+#include "GJRobotSprite.hpp"
 
 using namespace geode::prelude;
 
@@ -9,7 +10,8 @@ class $modify(MIPlayerObject, PlayerObject) {
 
         if (!gameLayer || (gameLayer->m_player1 && gameLayer->m_player2)) return true;
 
-        useCustomIcon();
+        if (!gameLayer->m_player1) useCustomIcon(false);
+        else if (!gameLayer->m_player2) useCustomIcon(true);
 
         return true;
     }
@@ -17,11 +19,14 @@ class $modify(MIPlayerObject, PlayerObject) {
     void updatePlayerFrame(int frame) {
         PlayerObject::updatePlayerFrame(frame);
 
-        if (m_gameLayer && (m_gameLayer->m_player1 == this || m_gameLayer->m_player2 == this)) useCustomIcon();
+        if (!m_gameLayer || frame == 0) return;
+
+        if (m_gameLayer->m_player1 == this) useCustomIcon(false);
+        else if (m_gameLayer->m_player2 == this) useCustomIcon(true);
     }
 
-    void useCustomIcon() {
-        auto iconFile = Mod::get()->getSavedValue<std::string>("icon", "");
+    void useCustomIcon(bool dual) {
+        auto iconFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("icon", dual), "");
         if (iconFile.empty() || !MoreIcons::hasIcon(iconFile)) return;
 
         auto icon = fmt::format("{}_001.png"_spr, iconFile);
@@ -47,11 +52,14 @@ class $modify(MIPlayerObject, PlayerObject) {
     void updatePlayerShipFrame(int frame) {
         PlayerObject::updatePlayerShipFrame(frame);
 
-        if (m_gameLayer && (m_gameLayer->m_player1 == this || m_gameLayer->m_player2 == this)) useCustomShip();
+        if (!m_gameLayer) return;
+
+        if (m_gameLayer->m_player1 == this) useCustomShip(false);
+        else if (m_gameLayer->m_player2 == this) useCustomShip(true);
     }
 
-    void useCustomShip() {
-        auto shipFile = Mod::get()->getSavedValue<std::string>("ship", "");
+    void useCustomShip(bool dual) {
+        auto shipFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("ship", dual), "");
         if (shipFile.empty() || !MoreIcons::hasShip(shipFile)) return;
 
         auto ship = fmt::format("{}_001.png"_spr, shipFile);
@@ -77,11 +85,14 @@ class $modify(MIPlayerObject, PlayerObject) {
     void updatePlayerRollFrame(int frame) {
         PlayerObject::updatePlayerRollFrame(frame);
 
-        if (m_gameLayer && (m_gameLayer->m_player1 == this || m_gameLayer->m_player2 == this)) useCustomBall();
+        if (!m_gameLayer || frame == 0) return;
+
+        if (m_gameLayer->m_player1 == this) useCustomBall(false);
+        else if (m_gameLayer->m_player2 == this) useCustomBall(true);
     }
 
-    void useCustomBall() {
-        auto ballFile = Mod::get()->getSavedValue<std::string>("ball", "");
+    void useCustomBall(bool dual) {
+        auto ballFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("ball", dual), "");
         if (ballFile.empty() || !MoreIcons::hasBall(ballFile)) return;
 
         auto ball = fmt::format("{}_001.png"_spr, ballFile);
@@ -107,11 +118,14 @@ class $modify(MIPlayerObject, PlayerObject) {
     void updatePlayerBirdFrame(int frame) {
         PlayerObject::updatePlayerBirdFrame(frame);
 
-        if (m_gameLayer && (m_gameLayer->m_player1 == this || m_gameLayer->m_player2 == this)) useCustomUfo();
+        if (!m_gameLayer) return;
+
+        if (m_gameLayer->m_player1 == this) useCustomUfo(false);
+        else if (m_gameLayer->m_player2 == this) useCustomUfo(true);
     }
 
-    void useCustomUfo() {
-        auto ufoFile = Mod::get()->getSavedValue<std::string>("ufo", "");
+    void useCustomUfo(bool dual) {
+        auto ufoFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("ufo", dual), "");
         if (ufoFile.empty() || !MoreIcons::hasUfo(ufoFile)) return;
 
         auto ufo = fmt::format("{}_001.png"_spr, ufoFile);
@@ -140,11 +154,14 @@ class $modify(MIPlayerObject, PlayerObject) {
     void updatePlayerDartFrame(int frame) {
         PlayerObject::updatePlayerDartFrame(frame);
 
-        if (m_gameLayer && (m_gameLayer->m_player1 == this || m_gameLayer->m_player2 == this)) useCustomWave();
+        if (!m_gameLayer) return;
+
+        if (m_gameLayer->m_player1 == this) useCustomWave(false);
+        else if (m_gameLayer->m_player2 == this) useCustomWave(true);
     }
 
-    void useCustomWave() {
-        auto waveFile = Mod::get()->getSavedValue<std::string>("wave", "");
+    void useCustomWave(bool dual) {
+        auto waveFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("wave", dual), "");
         if (waveFile.empty() || !MoreIcons::hasWave(waveFile)) return;
 
         auto wave = fmt::format("{}_001.png"_spr, waveFile);
@@ -167,14 +184,55 @@ class $modify(MIPlayerObject, PlayerObject) {
         }
     }
 
+    void createRobot(int frame) {
+        PlayerObject::createRobot(frame);
+
+        if (!m_gameLayer) return;
+
+        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this) MIRobotSprite::useCustomSprite(m_robotSprite, false);
+        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this) MIRobotSprite::useCustomSprite(m_robotSprite, true);
+        else return;
+
+        if (m_robotBatchNode) {
+            m_robotBatchNode->removeFromParent();
+            m_robotBatchNode->release();
+        }
+        m_robotBatchNode = CCSpriteBatchNode::createWithTexture(m_robotSprite->getTexture(), 25);
+        m_robotBatchNode->retain();
+        m_robotBatchNode->addChild(m_robotSprite);
+        if (m_isRobot) m_mainLayer->addChild(m_robotBatchNode, 2);
+    }
+
+    void createSpider(int frame) {
+        PlayerObject::createSpider(frame);
+    
+        if (!m_gameLayer) return;
+
+        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this) MIRobotSprite::useCustomSprite(m_spiderSprite, false);
+        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this) MIRobotSprite::useCustomSprite(m_spiderSprite, true);
+        else return;
+
+        if (m_spiderBatchNode) {
+            m_spiderBatchNode->removeFromParent();
+            m_spiderBatchNode->release();
+        }
+        m_spiderBatchNode = CCSpriteBatchNode::createWithTexture(m_spiderSprite->getTexture(), 25);
+        m_spiderBatchNode->retain();
+        m_spiderBatchNode->addChild(m_spiderSprite);
+        if (m_isSpider) m_mainLayer->addChild(m_spiderBatchNode, 2);
+    }
+
     void updatePlayerSwingFrame(int frame) {
         PlayerObject::updatePlayerSwingFrame(frame);
 
-        if (m_gameLayer && (m_gameLayer->m_player1 == this || m_gameLayer->m_player2 == this)) useCustomSwing();
+        if (!m_gameLayer) return;
+
+        if (m_gameLayer->m_player1 == this) useCustomSwing(false);
+        else if (m_gameLayer->m_player2 == this) useCustomSwing(true);
     }
 
-    void useCustomSwing() {
-        auto swingFile = Mod::get()->getSavedValue<std::string>("swing", "");
+    void useCustomSwing(bool dual) {
+        auto swingFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("swing", dual), "");
         if (swingFile.empty() || !MoreIcons::hasSwing(swingFile)) return;
 
         auto swing = fmt::format("{}_001.png"_spr, swingFile);
@@ -200,11 +258,14 @@ class $modify(MIPlayerObject, PlayerObject) {
     void updatePlayerJetpackFrame(int frame) {
         PlayerObject::updatePlayerJetpackFrame(frame);
 
-        if (m_gameLayer && (m_gameLayer->m_player1 == this || m_gameLayer->m_player2 == this)) useCustomJetpack();
+        if (!m_gameLayer) return;
+
+        if (m_gameLayer->m_player1 == this) useCustomJetpack(false);
+        else if (m_gameLayer->m_player2 == this) useCustomJetpack(true);
     }
 
-    void useCustomJetpack() {
-        auto jetpackFile = Mod::get()->getSavedValue<std::string>("jetpack", "");
+    void useCustomJetpack(bool dual) {
+        auto jetpackFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("jetpack", dual), "");
         if (jetpackFile.empty() || !MoreIcons::hasJetpack(jetpackFile)) return;
 
         auto jetpack = fmt::format("{}_001.png", jetpackFile);

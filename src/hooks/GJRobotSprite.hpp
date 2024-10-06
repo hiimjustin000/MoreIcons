@@ -1,8 +1,8 @@
 #include <Geode/modify/GJRobotSprite.hpp>
-class $modify(MIRobotSprite, GJRobotSprite) {
-    void updateFrame(int);
-    void useCustom(std::string);
-    void useCustomSprite();
-    void useCustomRobot(std::string);
-    void useCustomSpider(std::string);
+class MIRobotSprite {
+public:
+    static void useCustom(GJRobotSprite*, std::string);
+    static void useCustomSprite(GJRobotSprite*, bool);
+    static void useCustomRobot(GJRobotSprite*, std::string);
+    static void useCustomSpider(GJRobotSprite*, std::string);
 };
