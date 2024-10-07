@@ -1,5 +1,4 @@
 #include "../MoreIcons.hpp"
-#include "GJRobotSprite.hpp"
 
 using namespace geode::prelude;
 
@@ -189,8 +188,10 @@ class $modify(MIPlayerObject, PlayerObject) {
 
         if (!m_gameLayer) return;
 
-        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this) MIRobotSprite::useCustomSprite(m_robotSprite, false);
-        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this) MIRobotSprite::useCustomSprite(m_robotSprite, true);
+        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this)
+            MoreIcons::useCustomRobot(m_robotSprite, Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", false), ""));
+        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this)
+            MoreIcons::useCustomRobot(m_robotSprite, Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", true), ""));
         else return;
 
         if (m_robotBatchNode) {
@@ -208,8 +209,10 @@ class $modify(MIPlayerObject, PlayerObject) {
     
         if (!m_gameLayer) return;
 
-        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this) MIRobotSprite::useCustomSprite(m_spiderSprite, false);
-        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this) MIRobotSprite::useCustomSprite(m_spiderSprite, true);
+        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this)
+            MoreIcons::useCustomSpider(m_spiderSprite, Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("spider", false), ""));
+        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this)
+            MoreIcons::useCustomSpider(m_spiderSprite, Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("spider", true), ""));
         else return;
 
         if (m_spiderBatchNode) {

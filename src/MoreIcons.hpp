@@ -11,6 +11,7 @@ public:
     static inline std::unordered_map<std::string, std::string> SPIDER_TEXTURES;
     static inline std::vector<std::string> SWINGS;
     static inline std::vector<std::string> JETPACKS;
+    static inline LoadingLayer* LOADING_LAYER = nullptr;
 
     static bool hasIcon(const std::string& name) {
         return !ICONS.empty() && std::find(ICONS.begin(), ICONS.end(), name) != ICONS.end();
@@ -73,18 +74,19 @@ public:
     static void load() {
         auto configDir = geode::Mod::get()->getConfigDir();
         std::unordered_map<std::string, std::string> tempMap;
-        loadIcons(configDir / "icon", ICONS, tempMap);
-        loadIcons(configDir / "ship", SHIPS, tempMap);
-        loadIcons(configDir / "ball", BALLS, tempMap);
-        loadIcons(configDir / "ufo", UFOS, tempMap);
-        loadIcons(configDir / "wave", WAVES, tempMap);
-        loadIcons(configDir / "robot", ROBOTS, ROBOT_TEXTURES);
-        loadIcons(configDir / "spider", SPIDERS, SPIDER_TEXTURES);
-        loadIcons(configDir / "swing", SWINGS, tempMap);
-        loadIcons(configDir / "jetpack", JETPACKS, tempMap);
+        loadIcons(configDir / "icon", ICONS, tempMap, IconType::Cube);
+        loadIcons(configDir / "ship", SHIPS, tempMap, IconType::Ship);
+        loadIcons(configDir / "ball", BALLS, tempMap, IconType::Ball);
+        loadIcons(configDir / "ufo", UFOS, tempMap, IconType::Ufo);
+        loadIcons(configDir / "wave", WAVES, tempMap, IconType::Wave);
+        loadIcons(configDir / "robot", ROBOTS, ROBOT_TEXTURES, IconType::Robot);
+        loadIcons(configDir / "spider", SPIDERS, SPIDER_TEXTURES, IconType::Spider);
+        loadIcons(configDir / "swing", SWINGS, tempMap, IconType::Swing);
+        loadIcons(configDir / "jetpack", JETPACKS, tempMap, IconType::Jetpack);
+        if (LOADING_LAYER) static_cast<cocos2d::CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))->setString("");
     }
     static std::vector<std::filesystem::directory_entry> naturalSort(const std::filesystem::path& path);
-    static void loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::unordered_map<std::string, std::string>& textures);
+    static void loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::unordered_map<std::string, std::string>& textures, IconType type);
     static void changeSimplePlayer(SimplePlayer* player, IconType type) {
         changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);
     }
@@ -153,6 +155,24 @@ public:
         return getDual(prefix, dual);
     }
 
+    static std::string getFrameName(const std::string& name, const std::string prefix, IconType type) {
+        if (type != IconType::Robot && type != IconType::Spider) {
+            if (name.ends_with("_2_001.png")) return fmt::format("{}_2_001.png"_spr, prefix);
+            else if (name.ends_with("_3_001.png")) return fmt::format("{}_3_001.png"_spr, prefix);
+            else if (name.ends_with("_extra_001.png")) return fmt::format("{}_extra_001.png"_spr, prefix);
+            else if (name.ends_with("_glow_001.png")) return fmt::format("{}_glow_001.png"_spr, prefix);
+            else if (name.ends_with("_001.png")) return fmt::format("{}_001.png"_spr, prefix);
+        }
+        else for (int i = 1; i < 5; i++) {
+            if (name.ends_with(fmt::format("_{:02}_2_001.png", i))) return fmt::format("{}_{:02}_2_001.png"_spr, prefix, i);
+            else if (i == 1 && name.ends_with(fmt::format("_{:02}_extra_001.png", i))) return fmt::format("{}_{:02}_extra_001.png"_spr, prefix, i);
+            else if (name.ends_with(fmt::format("_{:02}_glow_001.png", i))) return fmt::format("{}_{:02}_glow_001.png"_spr, prefix, i);
+            else if (name.ends_with(fmt::format("_{:02}_001.png", i))) return fmt::format("{}_{:02}_001.png"_spr, prefix, i);
+        }
+
+        return name;
+    }
+
     static std::vector<std::string> getPage(IconType type, int page) {
         auto& vec = vectorForType(type);
         if (vec.size() <= page * 36) return {};
@@ -169,4 +189,20 @@ public:
         auto it = std::find(vec.begin(), vec.end(), geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""));
         return it == vec.end() ? 0 : (it - vec.begin()) / 36;
     }
+
+    static void useCustomRobot(GJRobotSprite* robot, const std::string& robotFile) {
+        if (robotFile.empty() || !MoreIcons::hasRobot(robotFile)) return;
+        robot->setBatchNode(nullptr);
+        robot->setTexture(cocos2d::CCTextureCache::get()->textureForKey(MoreIcons::ROBOT_TEXTURES[robotFile].c_str()));
+        useCustomSprite(robot, robotFile);
+    }
+
+    static void useCustomSpider(GJSpiderSprite* spider, const std::string& spiderFile) {
+        if (spiderFile.empty() || !MoreIcons::hasSpider(spiderFile)) return;
+        spider->setBatchNode(nullptr);
+        spider->setTexture(cocos2d::CCTextureCache::get()->textureForKey(MoreIcons::SPIDER_TEXTURES[spiderFile].c_str()));
+        useCustomSprite(spider, spiderFile);
+    }
+
+    static void useCustomSprite(GJRobotSprite* robot, const std::string& file);
 };

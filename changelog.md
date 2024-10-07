@@ -1,4 +1,8 @@
 # More Icons Changelog
+## v1.1.2 (2024-10-07)
+- Added sprite name detection for spritesheets
+- Added icon loading text to the loading screen
+
 ## v1.1.1 (2024-10-06)
 - Fixed custom jetpacks not showing up in game
 - Fixed icon sorting not working properly (#2)
