@@ -83,6 +83,7 @@ public:
         loadIcons(configDir / "swing", SWINGS, tempMap);
         loadIcons(configDir / "jetpack", JETPACKS, tempMap);
     }
+    static std::vector<std::filesystem::directory_entry> naturalSort(const std::filesystem::path& path);
     static void loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::unordered_map<std::string, std::string>& textures);
     static void changeSimplePlayer(SimplePlayer* player, IconType type) {
         changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);

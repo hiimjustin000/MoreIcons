@@ -25,6 +25,39 @@ namespace {
     void _addSpriteFramesWithDictionary(CCDictionary* p1, CCTexture2D* p2);
 }
 
+std::vector<std::filesystem::directory_entry> MoreIcons::naturalSort(const std::filesystem::path& path) {
+    std::vector<std::filesystem::directory_entry> entries;
+    for (auto& entry : std::filesystem::directory_iterator(path)) {
+        entries.push_back(entry);
+    }
+    std::sort(entries.begin(), entries.end(), [](const std::filesystem::directory_entry& a, const std::filesystem::directory_entry& b) {
+        auto aStr = a.path().filename().string();
+        auto bStr = b.path().filename().string();
+
+        auto aIt = aStr.begin();
+        auto bIt = bStr.begin();
+
+        while (aIt != aStr.end() && bIt != bStr.end()) {
+            if (std::isdigit(*aIt) && std::isdigit(*bIt)) {
+                std::string aNum, bNum;
+                while (std::isdigit(*aIt)) aNum += *aIt++;
+                while (std::isdigit(*bIt)) bNum += *bIt++;
+                if (aNum != bNum) return std::stoi(aNum) < std::stoi(bNum);
+            }
+            else {
+                auto aLower = std::tolower(*aIt);
+                auto bLower = std::tolower(*bIt);
+                if (aLower != bLower) return aLower < bLower;
+                aIt++;
+                bIt++;
+            }
+        }
+
+        return aStr.size() < bStr.size();
+    });
+    return entries;
+}
+
 void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::unordered_map<std::string, std::string>& textures) {
     log::info("Loading {}s", path.filename().string());
     if (!std::filesystem::exists(path)) {
@@ -33,7 +66,9 @@ void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::st
     }
 
     auto textureCache = CCTextureCache::get();
-    for (auto& entry : std::filesystem::directory_iterator(path)) {
+    for (auto& entry : naturalSort(path)) {
+        if (!entry.is_regular_file()) continue;
+
         auto path = entry.path();
         if (path.extension() != ".plist") continue;
 

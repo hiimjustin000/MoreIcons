@@ -1,4 +1,8 @@
 # More Icons Changelog
+## v1.1.1 (2024-10-06)
+- Fixed custom jetpacks not showing up in game
+- Fixed icon sorting not working properly (#2)
+
 ## v1.1.0 (2024-10-06)
 - Added support for Separate Dual Icons
 - Added loaded icon list in saved.json

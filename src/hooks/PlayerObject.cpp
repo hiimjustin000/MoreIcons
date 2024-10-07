@@ -268,10 +268,10 @@ class $modify(MIPlayerObject, PlayerObject) {
         auto jetpackFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("jetpack", dual), "");
         if (jetpackFile.empty() || !MoreIcons::hasJetpack(jetpackFile)) return;
 
-        auto jetpack = fmt::format("{}_001.png", jetpackFile);
-        auto jetpack2 = fmt::format("{}_2_001.png", jetpackFile);
-        auto jetpackExtra = fmt::format("{}_extra_001.png", jetpackFile);
-        auto jetpackGlow = fmt::format("{}_glow_001.png", jetpackFile);
+        auto jetpack = fmt::format("{}_001.png"_spr, jetpackFile);
+        auto jetpack2 = fmt::format("{}_2_001.png"_spr, jetpackFile);
+        auto jetpackExtra = fmt::format("{}_extra_001.png"_spr, jetpackFile);
+        auto jetpackGlow = fmt::format("{}_glow_001.png"_spr, jetpackFile);
 
         auto spriteFrameCache = CCSpriteFrameCache::get();
         m_vehicleSprite->setDisplayFrame(spriteFrameCache->spriteFrameByName(jetpack.c_str()));
