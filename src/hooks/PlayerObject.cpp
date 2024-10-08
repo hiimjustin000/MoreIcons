@@ -310,7 +310,13 @@ class $modify(MIPlayerObject, PlayerObject) {
         if (m_regularTrail) m_regularTrail->removeFromParent();
         m_regularTrail = CCMotionStreak::create(0.3f, 5.0f, 14.0f, { 255, 255, 255 },
             CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_TEXTURES[trailFile].c_str()));
+        #if defined(GEODE_IS_ANDROID32)
+        *reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(m_regularTrail) + 0x168) = 50.0f;
+        #elif defined(GEODE_IS_ANDROID64)
+        *reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(m_regularTrail) + 0x1c8) = 50.0f;
+        #else
         m_regularTrail->setM_fMaxSeg(50.0f);
+        #endif
         m_parentLayer->addChild(m_regularTrail, -2);
         m_regularTrail->stopStroke();
     }
