@@ -198,6 +198,15 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         f->m_pages[m_iconType] = f->m_page;
         createNavMenu();
 
+        auto iconType = GameManager::get()->m_playerIconType;
+        MoreIcons::changeSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(iconType, false), ""), iconType);
+        auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
+        if (sdi) {
+            auto lastmode = (IconType)sdi->getSavedValue("lastmode", 0);
+            MoreIcons::changeSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
+                Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(lastmode, true), ""), lastmode);
+        }
+
         m_leftArrow->setVisible(vec.size() > 36);
         m_rightArrow->setVisible(vec.size() > 36);
 
@@ -213,7 +222,6 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         auto objs = CCArray::create();
         CCMenuItemSpriteExtra* current = nullptr;
         auto savedType = MoreIcons::savedForType(m_iconType);
-        auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
         auto dual = sdi && sdi->getSavedValue("2pselected", false);
         int i = 1;
         auto hasAnimProf = Loader::get()->isModLoaded("thesillydoggo.animatedprofiles");

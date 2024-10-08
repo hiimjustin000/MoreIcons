@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.2.1 (2024-10-08)
+- Fixed custom spiders not showing up in game (#4)
+
 ## v1.2.0 (2024-10-07)
 - Added support for texture packs
 - Added support for custom trails
