@@ -32,6 +32,13 @@ The spritesheets and atlases should be placed in `(Geometry Dash folder)/geode/c
 
 If anything goes wrong, the mod will log warnings and errors to the console, which can be checked in `(Geometry Dash folder)/geode/logs`.
 
+## Texture Packs
+For adding icons to texture packs, the process is similar to adding icons to the mod. However, you will need the mod "Texture Loader" by Geode Team installed to use these texture packs.
+
+The texture pack should be placed in `(Geometry Dash folder)/config/geode.texture-loader/packs/(pack name)`, where `(pack name)` is the name of the texture pack, or a zip file containing the texture pack. The same rules apply for the texture pack as they do for the custom icons, with the sprites being added to `(pack name)/config/hiimjustin000.more_icons/(gamemode)`, where `(gamemode)` is the gamemode the icon is for.
+
+Note that this will only work if the texture pack has a `pack.json` file in the root of the texture pack directory.
+
 ## Using Icons
 To use a custom icon, you will need to go into the icon kit. In the icon kit, there is a second row of dots that you can click on to view the extra icons. Click on the dot to view a page of extra icons, and click on one of the icons to select it.
 

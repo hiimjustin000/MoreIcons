@@ -188,41 +188,41 @@ class $modify(MIPlayerObject, PlayerObject) {
 
         if (!m_gameLayer) return;
 
-        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this)
-            MoreIcons::useCustomRobot(m_robotSprite, Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", false), ""));
-        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this)
-            MoreIcons::useCustomRobot(m_robotSprite, Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", true), ""));
+        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this) {
+            auto robotFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", false), "");
+            if (robotFile.empty() || !MoreIcons::hasRobot(robotFile)) return;
+            MoreIcons::useCustomRobot(m_robotSprite, robotFile);
+        }
+        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this) {
+            auto robotFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", true), "");
+            if (robotFile.empty() || !MoreIcons::hasRobot(robotFile)) return;
+            MoreIcons::useCustomRobot(m_robotSprite, robotFile);
+        }
         else return;
 
-        if (m_robotBatchNode) {
-            m_robotBatchNode->removeFromParent();
-            m_robotBatchNode->release();
-        }
-        m_robotBatchNode = CCSpriteBatchNode::createWithTexture(m_robotSprite->getTexture(), 25);
-        m_robotBatchNode->retain();
+        m_robotBatchNode->initWithTexture(m_robotSprite->getTexture(), 25);
         m_robotBatchNode->addChild(m_robotSprite);
-        if (m_isRobot) m_mainLayer->addChild(m_robotBatchNode, 2);
     }
 
     void createSpider(int frame) {
         PlayerObject::createSpider(frame);
-    
+
         if (!m_gameLayer) return;
 
-        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this)
-            MoreIcons::useCustomSpider(m_spiderSprite, Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("spider", false), ""));
-        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this)
-            MoreIcons::useCustomSpider(m_spiderSprite, Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("spider", true), ""));
+        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this) {
+            auto spiderFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", false), "");
+            if (spiderFile.empty() || !MoreIcons::hasRobot(spiderFile)) return;
+            MoreIcons::useCustomSpider(m_spiderSprite, spiderFile);
+        }
+        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this) {
+            auto spiderFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", true), "");
+            if (spiderFile.empty() || !MoreIcons::hasRobot(spiderFile)) return;
+            MoreIcons::useCustomSpider(m_spiderSprite, spiderFile);
+        }
         else return;
 
-        if (m_spiderBatchNode) {
-            m_spiderBatchNode->removeFromParent();
-            m_spiderBatchNode->release();
-        }
-        m_spiderBatchNode = CCSpriteBatchNode::createWithTexture(m_spiderSprite->getTexture(), 25);
-        m_spiderBatchNode->retain();
+        m_spiderBatchNode->initWithTexture(m_spiderSprite->getTexture(), 25);
         m_spiderBatchNode->addChild(m_spiderSprite);
-        if (m_isSpider) m_mainLayer->addChild(m_spiderBatchNode, 2);
     }
 
     void updatePlayerSwingFrame(int frame) {
@@ -289,5 +289,29 @@ class $modify(MIPlayerObject, PlayerObject) {
             m_vehicleSpriteWhitener->setDisplayFrame(jetpackExtraFrame);
             m_vehicleSpriteWhitener->setPosition(m_vehicleSprite->getContentSize() / 2);
         }
+    }
+
+    void setupStreak() {
+        PlayerObject::setupStreak();
+
+        if (!m_gameLayer) return;
+
+        if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this) useCustomTrail(false);
+        else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this) useCustomTrail(true);
+    }
+
+    void useCustomTrail(bool dual) {
+        auto trailFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("trail", dual), "");
+        if (trailFile.empty() || !MoreIcons::hasTrail(trailFile)) return;
+
+        m_streakRelated1 = 14.0f;
+        m_streakRelated2 = true;
+        m_streakRelated3 = false;
+        if (m_regularTrail) m_regularTrail->removeFromParent();
+        m_regularTrail = CCMotionStreak::create(0.3f, 5.0f, 14.0f, { 255, 255, 255 },
+            CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_TEXTURES[trailFile].c_str()));
+        m_regularTrail->setM_fMaxSeg(50.0f);
+        m_parentLayer->addChild(m_regularTrail, -2);
+        m_regularTrail->stopStroke();
     }
 };

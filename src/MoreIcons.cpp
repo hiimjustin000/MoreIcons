@@ -57,51 +57,73 @@ std::vector<std::filesystem::directory_entry> MoreIcons::naturalSort(const std::
     return entries;
 }
 
-void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::unordered_map<std::string, std::string>& textures, IconType type) {
+// The cooler https://github.com/Alphalaneous/HappyTextures/blob/1.5.0/src/Utils.h#L60
+std::vector<std::filesystem::path> MoreIcons::getTexturePacks() {
+    std::vector<std::filesystem::path> packs;
+    packs.push_back(Mod::get()->getConfigDir());
+    if (auto textureLoader = Loader::get()->getLoadedMod("geode.texture-loader")) {
+        auto searchPaths = CCFileUtils::get()->getSearchPaths();
+        auto texturePacks = textureLoader->getConfigDir() / "packs";
+        auto unzippedPacks = textureLoader->getSaveDir() / "unzipped";
+        auto modID = Mod::get()->getID();
+        for (auto searchPath : searchPaths) {
+            auto path = std::filesystem::path(searchPath);
+            auto parentPath = std::filesystem::path(searchPath);
+            while (parentPath.has_parent_path()) {
+                if (parentPath == texturePacks || parentPath == unzippedPacks && std::find(packs.begin(), packs.end(), path) == packs.end()) {
+                    auto configPath = path / "config" / modID;
+                    if (std::filesystem::exists(configPath)) packs.push_back(configPath);
+                    break;
+                }
+                if (parentPath == std::filesystem::current_path().root_path()) break;
+                parentPath = parentPath.parent_path();
+            }
+        }
+    }
+    return packs;
+}
+
+void MoreIcons::loadIcons(
+    const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates,
+    std::unordered_map<std::string, std::string>& textures, IconType type, bool create
+) {
     auto folder = path.filename().string();
-    log::info("Loading {}s", folder);
+    log::info("Loading {}s from {}", folder, path.string());
     if (LOADING_LAYER)
         static_cast<CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))->setString(fmt::format("More Icons: Loading {}s", folder).c_str());
     if (!std::filesystem::exists(path)) {
-        std::filesystem::create_directories(path);
+        if (create) std::filesystem::create_directories(path);
         return;
     }
 
     auto textureCache = CCTextureCache::get();
+    auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
     for (auto& entry : naturalSort(path)) {
         if (!entry.is_regular_file()) continue;
 
-        auto path = entry.path();
-        if (path.extension() != ".plist") continue;
+        auto entryPath = entry.path();
+        if (entryPath.extension() != ".plist") continue;
 
-        auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
-        auto pathFilename = path.filename().string();
+        auto pathFilename = entryPath.filename().string();
         auto fileQuality = kTextureQualityLow;
         if (pathFilename.find("-uhd.plist") != std::string::npos) {
-            auto hdExists = std::filesystem::exists(string::replace(path.string(), "-uhd.plist", "-hd.plist"));
+            auto hdExists = std::filesystem::exists(string::replace(entryPath.string(), "-uhd.plist", "-hd.plist"));
             if (hdExists || textureQuality != kTextureQualityHigh) {
                 if (!hdExists) log::warn("Ignoring too high quality plist file: {}", pathFilename);
                 continue;
             }
-            else {
-                fileQuality = kTextureQualityHigh;
-                log::info("Loading UHD plist file: {}", pathFilename);
-            }
+            else fileQuality = kTextureQualityHigh;
         }
         else if (pathFilename.find("-hd.plist") != std::string::npos) {
-            auto sdExists = std::filesystem::exists(string::replace(path.string(), "-hd.plist", ".plist"));
+            auto sdExists = std::filesystem::exists(string::replace(entryPath.string(), "-hd.plist", ".plist"));
             if (sdExists || (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium)) {
                 if (!sdExists) log::warn("Ignoring too high quality plist file: {}", pathFilename);
                 continue;
             }
-            else {
-                fileQuality = kTextureQualityMedium;
-                log::info("Loading HD plist file: {}", pathFilename);
-            }
+            else fileQuality = kTextureQualityMedium;
         }
-        else log::info("Loading plist file: {}", pathFilename);
 
-        auto plistPath = path.string();
+        auto plistPath = entryPath.string();
         auto noGraphicPlistPath = string::replace(string::replace(plistPath, "-uhd.plist", ".plist"), "-hd.plist", ".plist");
         auto possibleUHD = string::replace(noGraphicPlistPath, ".plist", "-uhd.plist");
         auto possibleHD = string::replace(noGraphicPlistPath, ".plist", "-hd.plist");
@@ -118,12 +140,16 @@ void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::st
         auto dict = CCDictionary::createWithContentsOfFileThreadSafe(plistPath.c_str());
         auto frames = CCDictionary::create();
         auto name = std::filesystem::path(noGraphicPlistPath).stem().string();
+        if (std::find(list.begin(), list.end(), name) != list.end()) {
+            duplicates.push_back(name);
+            name += fmt::format("_{:02}", std::count(duplicates.begin(), duplicates.end(), name));
+        }
         for (auto [frameName, frame] : CCDictionaryExt<std::string, CCDictionary*>(static_cast<CCDictionary*>(dict->objectForKey("frames")))) {
             frames->setObject(frame, getFrameName(frameName, name, type));
         }
         dict->setObject(frames, "frames");
         auto metadata = static_cast<CCDictionary*>(dict->objectForKey("metadata"));
-        auto fullTexturePath = (path.parent_path() / std::filesystem::path(metadata->valueForKey("textureFileName")->getCString()).filename()).string();
+        auto fullTexturePath = (entryPath.parent_path() / std::filesystem::path(metadata->valueForKey("textureFileName")->getCString()).filename()).string();
         if (!std::filesystem::exists(fullTexturePath)) {
             log::warn("Texture file not found: {}", fullTexturePath);
             continue;
@@ -135,6 +161,36 @@ void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::st
     }
 
     Mod::get()->setSavedValue(path.filename().string() + "s", list);
+}
+
+void MoreIcons::loadTrails(const std::filesystem::path& path, std::vector<std::string>& duplicates, bool create) {
+    auto folder = path.filename().string();
+    log::info("Loading trails from {}", path.string());
+    if (LOADING_LAYER)
+        static_cast<CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))->setString("More Icons: Loading Trails");
+    if (!std::filesystem::exists(path)) {
+        if (create) std::filesystem::create_directories(path);
+        return;
+    }
+
+    auto textureCache = CCTextureCache::get();
+    for (auto& entry : naturalSort(path)) {
+        if (!entry.is_regular_file()) continue;
+
+        auto entryPath = entry.path();
+        if (entryPath.extension() != ".png") continue;
+
+        auto name = entryPath.stem().string();
+        if (std::find(TRAILS.begin(), TRAILS.end(), name) != TRAILS.end()) {
+            duplicates.push_back(name);
+            name += fmt::format("_{:02}", std::count(duplicates.begin(), duplicates.end(), name));
+        }
+
+        auto fullTexturePath = entryPath.string();
+        textureCache->addImage(fullTexturePath.c_str(), false);
+        TRAILS.push_back(name);
+        TRAIL_TEXTURES.emplace(name, fullTexturePath);
+    }
 }
 
 void MoreIcons::changeSimplePlayer(SimplePlayer* player, const std::string& file, IconType iconType) {

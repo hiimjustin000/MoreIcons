@@ -2,11 +2,8 @@
 
 using namespace geode::prelude;
 
+#include <Geode/modify/LoadingLayer.hpp>
 class $modify(MILoadingLayer, LoadingLayer) {
-    static void onModify(auto& self) {
-        (void)self.setHookPriority("LoadingLayer::init", -1);
-    }
-
     bool init(bool refresh) {
         if (!LoadingLayer::init(refresh)) return false;
 

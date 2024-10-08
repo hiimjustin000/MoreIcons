@@ -58,7 +58,8 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     void onSelect(CCObject* sender) {
         GJGarageLayer::onSelect(sender);
 
-        Mod::get()->setSavedValue<std::string>(MoreIcons::savedForType(m_iconType), "");
+        auto savedType = MoreIcons::savedForType(m_selectedIconType);
+        if (!savedType.empty()) Mod::get()->setSavedValue<std::string>(savedType, "");
     }
 
     void newOn2PToggle(CCObject* sender) {
@@ -80,6 +81,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         MoreIcons::swapDual("spider");
         MoreIcons::swapDual("swing");
         MoreIcons::swapDual("jetpack");
+        MoreIcons::swapDual("trail");
         auto iconType = GameManager::get()->m_playerIconType;
         MoreIcons::changeSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(iconType, false), ""), iconType);
         auto lastmode = (IconType)Loader::get()->getLoadedMod("weebify.separate_dual_icons")->getSavedValue("lastmode", 0);
@@ -173,6 +175,11 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     }
 
     void setupCustomPage(int page) {
+        if (m_iconType == IconType::Special) {
+            setupCustomSpecialPage(page);
+            return;
+        }
+
         auto& vec = MoreIcons::vectorForType(m_iconType);
         auto f = m_fields.self();
         if (f->m_pageBar) {
@@ -209,10 +216,15 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
         auto dual = sdi && sdi->getSavedValue("2pselected", false);
         int i = 1;
+        auto hasAnimProf = Loader::get()->isModLoaded("thesillydoggo.animatedprofiles");
         for (auto name : MoreIcons::getPage(m_iconType, f->m_page)) {
             auto itemIcon = GJItemIcon::createBrowserItem(unlockType, 1);
             itemIcon->setScale(GJItemIcon::scaleForType(unlockType));
             MoreIcons::changeSimplePlayer(itemIcon->m_player, name, m_iconType);
+            if (hasAnimProf) {
+                if (auto robotSprite = itemIcon->m_player->m_robotSprite) robotSprite->runAnimation("idle01");
+                if (auto spiderSprite = itemIcon->m_player->m_spiderSprite) spiderSprite->runAnimation("idle01");
+            }
             auto iconButton = CCMenuItemExt::createSpriteExtra(itemIcon, [this, f, name, sdi, dual, savedType, gameManager, unlockType](CCMenuItemSpriteExtra* sender) {
                 m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
                 m_cursor1->setVisible(true);
@@ -252,5 +264,92 @@ class $modify(MIGarageLayer, GJGarageLayer) {
 
         m_cursor1->setVisible(current != nullptr);
         if (current) m_cursor1->setPosition(current->getParent()->convertToWorldSpace(current->getPosition()));
+    }
+
+    void setupCustomSpecialPage(int page) {
+        auto& vec = MoreIcons::vectorForType(m_iconType);
+        auto f = m_fields.self();
+        if (f->m_pageBar) {
+            f->m_pageBar->removeFromParent();
+            f->m_pageBar = nullptr;
+        }
+        if (vec.empty()) {
+            createNavMenu();
+            return;
+        }
+
+        m_iconSelection->setVisible(false);
+
+        f->m_custom = true;
+        f->m_page = MoreIcons::wrapPage(m_iconType, page);
+        f->m_pages[m_iconType] = f->m_page;
+        createNavMenu();
+
+        m_leftArrow->setVisible(vec.size() > 36);
+        m_rightArrow->setVisible(vec.size() > 36);
+
+        auto spriteFrameCache = CCSpriteFrameCache::get();
+        for (auto navDot : CCArrayExt<CCMenuItemSpriteExtra*>(m_navDotMenu->getChildren())) {
+            static_cast<CCSprite*>(navDot->getNormalImage())->setDisplayFrame(spriteFrameCache->spriteFrameByName("gj_navDotBtn_off_001.png"));
+        }
+
+        auto winSize = CCDirector::get()->getWinSize();
+        auto unlockType = GameManager::get()->iconTypeToUnlockType(m_iconType);
+        auto objs = CCArray::create();
+        CCMenuItemSpriteExtra* current = nullptr;
+        auto savedType = MoreIcons::savedForType(m_iconType);
+        auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
+        auto dual = sdi && sdi->getSavedValue("2pselected", false);
+        int i = 1;
+        for (auto name : MoreIcons::getPage(m_iconType, f->m_page)) {
+            auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
+            square->setColor({ 150, 150, 150 });
+            auto streak = CCSprite::createWithTexture(CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_TEXTURES[name].c_str()));
+            limitNodeWidth(streak, 27.0f, 99.0f, 0.01f);
+            streak->setRotation(90.0f);
+            square->addChild(streak);
+            streak->setPosition(square->getContentSize() / 2);
+            square->setScale(0.8f);
+            auto iconButton = CCMenuItemExt::createSpriteExtra(square, [this, name, sdi, dual, savedType, unlockType](CCMenuItemSpriteExtra* sender) {
+                m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
+                m_cursor1->setVisible(true);
+                auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
+                if (Mod::get()->setSavedValue<std::string>(savedType, name) == name && selectedIconType == m_iconType) {
+                    auto popup = ItemInfoPopup::create(1, unlockType);
+                    if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0)) nameLabel->setString(name.c_str());
+                    if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
+                    if (auto popupIcon = getChildOfType<GJItemIcon>(popup->m_mainLayer, 0)) {
+                        popupIcon->setVisible(false);
+                        auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
+                        square->setColor({ 150, 150, 150 });
+                        auto streak = CCSprite::createWithTexture(CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_TEXTURES[name].c_str()));
+                        limitNodeWidth(streak, 27.0f, 99.0f, 0.01f);
+                        streak->setRotation(90.0f);
+                        square->addChild(streak);
+                        streak->setPosition(square->getContentSize() / 2);
+                        square->setPosition(popupIcon->getPosition());
+                        square->setScale(popupIcon->getScale());
+                        popup->m_mainLayer->addChild(square);
+                    }
+                    if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
+                        fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
+                    popup->show();
+                }
+                if (dual) sdi->setSavedValue("lasttype", (int)m_iconType);
+                else m_selectedIconType = m_iconType;
+            });
+            iconButton->setTag(i++);
+            objs->addObject(iconButton);
+            if (name == Mod::get()->getSavedValue<std::string>(savedType, "")) current = iconButton;
+        }
+
+        f->m_pageBar = ListButtonBar::create(objs, winSize / 2 - CCPoint { 0.0f, 65.0f }, 12, 3, 5.0f, 5.0f, 25.0f, 220.0f, 1);
+        f->m_pageBar->m_scrollLayer->togglePageIndicators(false);
+        f->m_pageBar->setID("icon-selection-bar"_spr);
+        addChild(f->m_pageBar, 101);
+
+        m_cursor1->setVisible(current != nullptr);
+        if (current) m_cursor1->setPosition(current->getParent()->convertToWorldSpace(current->getPosition()));
+        m_cursor2->setVisible(false);
     }
 };

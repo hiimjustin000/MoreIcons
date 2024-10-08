@@ -11,6 +11,8 @@ public:
     static inline std::unordered_map<std::string, std::string> SPIDER_TEXTURES;
     static inline std::vector<std::string> SWINGS;
     static inline std::vector<std::string> JETPACKS;
+    static inline std::vector<std::string> TRAILS;
+    static inline std::unordered_map<std::string, std::string> TRAIL_TEXTURES;
     static inline LoadingLayer* LOADING_LAYER = nullptr;
 
     static bool hasIcon(const std::string& name) {
@@ -49,6 +51,10 @@ public:
         return !JETPACKS.empty() && std::find(JETPACKS.begin(), JETPACKS.end(), name) != JETPACKS.end();
     }
 
+    static bool hasTrail(const std::string& name) {
+        return !TRAILS.empty() && std::find(TRAILS.begin(), TRAILS.end(), name) != TRAILS.end();
+    }
+
     static void clear() {
         ICONS.clear();
         geode::Mod::get()->setSavedValue("icons", ICONS);
@@ -70,25 +76,40 @@ public:
         geode::Mod::get()->setSavedValue("swings", SWINGS);
         JETPACKS.clear();
         geode::Mod::get()->setSavedValue("jetpacks", JETPACKS);
+        TRAILS.clear();
+        geode::Mod::get()->setSavedValue("trails", TRAILS);
     }
     static void load() {
-        auto configDir = geode::Mod::get()->getConfigDir();
         std::unordered_map<std::string, std::string> tempMap;
-        loadIcons(configDir / "icon", ICONS, tempMap, IconType::Cube);
-        loadIcons(configDir / "ship", SHIPS, tempMap, IconType::Ship);
-        loadIcons(configDir / "ball", BALLS, tempMap, IconType::Ball);
-        loadIcons(configDir / "ufo", UFOS, tempMap, IconType::Ufo);
-        loadIcons(configDir / "wave", WAVES, tempMap, IconType::Wave);
-        loadIcons(configDir / "robot", ROBOTS, ROBOT_TEXTURES, IconType::Robot);
-        loadIcons(configDir / "spider", SPIDERS, SPIDER_TEXTURES, IconType::Spider);
-        loadIcons(configDir / "swing", SWINGS, tempMap, IconType::Swing);
-        loadIcons(configDir / "jetpack", JETPACKS, tempMap, IconType::Jetpack);
+        auto packs = getTexturePacks();
+        auto packSize = packs.size();
+        std::vector<std::string> duplicates;
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "icon", ICONS, duplicates, tempMap, IconType::Cube, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ship", SHIPS, duplicates, tempMap, IconType::Ship, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ball", BALLS, duplicates, tempMap, IconType::Ball, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ufo", UFOS, duplicates, tempMap, IconType::Ufo, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "wave", WAVES, duplicates, tempMap, IconType::Wave, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "robot", ROBOTS, duplicates, ROBOT_TEXTURES, IconType::Robot, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "spider", SPIDERS, duplicates, SPIDER_TEXTURES, IconType::Spider, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "swing", SWINGS, duplicates, tempMap, IconType::Swing, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "jetpack", JETPACKS, duplicates, tempMap, IconType::Jetpack, i == 0);
+        duplicates.clear();
+        for (int i = 0; i < packSize; i++) loadTrails(packs[i] / "trail", duplicates, i == 0);
+        duplicates.clear();
         if (LOADING_LAYER) static_cast<cocos2d::CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))->setString("");
     }
     static std::vector<std::filesystem::directory_entry> naturalSort(const std::filesystem::path& path);
-    static void loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::unordered_map<std::string, std::string>& textures, IconType type);
+    static std::vector<std::filesystem::path> getTexturePacks();
+    static void loadIcons(
+        const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates,
+        std::unordered_map<std::string, std::string>& textures, IconType type, bool create
+    );
+    static void loadTrails(const std::filesystem::path& path, std::vector<std::string>& duplicates, bool create);
     static void changeSimplePlayer(SimplePlayer* player, IconType type) {
         changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);
+    }
+    static void changeSimplePlayer(SimplePlayer* player, IconType type, bool dual) {
+        changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type, dual), ""), type);
     }
     static void changeSimplePlayer(SimplePlayer*, const std::string&, IconType);
     static bool doesExist(cocos2d::CCSpriteFrame* frame) {
@@ -125,6 +146,8 @@ public:
                 return SWINGS;
             case IconType::Jetpack:
                 return JETPACKS;
+            case IconType::Special:
+                return TRAILS;
             default: {
                 static std::vector<std::string> empty;
                 return empty;
@@ -149,6 +172,7 @@ public:
             case IconType::Spider: prefix = "spider"; break;
             case IconType::Swing: prefix = "swing"; break;
             case IconType::Jetpack: prefix = "jetpack"; break;
+            case IconType::Special: prefix = "trail"; break;
             default: prefix = ""; break;
         }
 

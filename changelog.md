@@ -1,4 +1,10 @@
 # More Icons Changelog
+## v1.2.0 (2024-10-07)
+- Added support for texture packs
+- Added support for custom trails
+- Added support for Icon Profile in the main menu and Animated Profile Icons in the icon kit
+- Fixed a bug where the robot's boost particles would not show up (#3)
+
 ## v1.1.2 (2024-10-07)
 - Added sprite name detection for spritesheets
 - Added icon loading text to the loading screen

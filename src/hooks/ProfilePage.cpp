@@ -15,7 +15,7 @@ class $modify(MIProfilePage, ProfilePage) {
     static void onModify(auto& self) {
         (void)self.setHookPriority("ProfilePage::loadPageFromUserInfo", -1);
     }
-    
+
     void loadPageFromUserInfo(GJUserScore* score) {
         ProfilePage::loadPageFromUserInfo(score);
 
@@ -49,10 +49,12 @@ class $modify(MIProfilePage, ProfilePage) {
             f->m_originalSDIToggle = twoPToggler->m_pfnSelector;
             twoPToggler->setTarget(this, menu_selector(MIProfilePage::newOn2PToggle));
 
-            auto shipToggler = static_cast<CCMenuItemSpriteExtra*>(playerMenu->getChildByID("player-ship"));
-            f->m_originalSDIShipTarget = shipToggler->m_pListener;
-            f->m_originalSDIShip = shipToggler->m_pfnSelector;
-            shipToggler->setTarget(this, menu_selector(MIProfilePage::newOnShipToggle));
+            if (!Loader::get()->isModLoaded("rynat.better_unlock_info")) {
+                auto shipToggler = static_cast<CCMenuItemSpriteExtra*>(playerMenu->getChildByID("player-ship"));
+                f->m_originalSDIShipTarget = shipToggler->m_pListener;
+                f->m_originalSDIShip = shipToggler->m_pfnSelector;
+                shipToggler->setTarget(this, menu_selector(MIProfilePage::newOnShipToggle));
+            }
         }
     }
 
