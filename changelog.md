@@ -1,12 +1,17 @@
 # More Icons Changelog
+## v1.2.2 (2024-10-08)
+- Added support for individual images per icon piece
+- Added trail customization options ([#5](https://github.com/hiimjustin000/MoreIcons/issues/5))
+- Fixed robots and spiders not changing in icon popups
+
 ## v1.2.1 (2024-10-08)
-- Fixed custom spiders not showing up in game (#4)
+- Fixed custom spiders not showing up in game ([#4](https://github.com/hiimjustin000/MoreIcons/issues/4))
 
 ## v1.2.0 (2024-10-07)
 - Added support for texture packs
 - Added support for custom trails
 - Added support for Icon Profile in the main menu and Animated Profile Icons in the icon kit
-- Fixed a bug where the robot's boost particles would not show up (#3)
+- Fixed a bug where the robot's boost particles would not show up ([#3](https://github.com/hiimjustin000/MoreIcons/issues/3))
 
 ## v1.1.2 (2024-10-07)
 - Added sprite name detection for spritesheets
@@ -14,7 +19,7 @@
 
 ## v1.1.1 (2024-10-06)
 - Fixed custom jetpacks not showing up in game
-- Fixed icon sorting not working properly (#2)
+- Fixed icon sorting not working properly ([#2](https://github.com/hiimjustin000/MoreIcons/issues/2))
 
 ## v1.1.0 (2024-10-06)
 - Added support for Separate Dual Icons

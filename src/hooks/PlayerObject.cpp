@@ -1,4 +1,5 @@
 #include "../MoreIcons.hpp"
+#include "../classes/DummyNode.hpp"
 
 using namespace geode::prelude;
 
@@ -184,6 +185,8 @@ class $modify(MIPlayerObject, PlayerObject) {
     }
 
     void createRobot(int frame) {
+        auto hasExisted = m_robotSprite != nullptr;
+
         PlayerObject::createRobot(frame);
 
         if (!m_gameLayer) return;
@@ -200,11 +203,21 @@ class $modify(MIPlayerObject, PlayerObject) {
         }
         else return;
 
-        m_robotBatchNode->initWithTexture(m_robotSprite->getTexture(), 25);
+        m_robotSprite->retain();
+        if (hasExisted) {
+            m_robotBatchNode->removeFromParent();
+            m_robotBatchNode->release();
+        }
+        m_robotBatchNode = DummyNode::createWithTexture(m_robotSprite->getTexture(), 25);
+        m_robotBatchNode->retain();
         m_robotBatchNode->addChild(m_robotSprite);
+        if (hasExisted && m_isRobot) m_mainLayer->addChild(m_robotBatchNode, 2);
+        m_robotSprite->release();
     }
 
     void createSpider(int frame) {
+        auto hasExisted = m_spiderSprite != nullptr;
+
         PlayerObject::createSpider(frame);
 
         if (!m_gameLayer) return;
@@ -221,8 +234,16 @@ class $modify(MIPlayerObject, PlayerObject) {
         }
         else return;
 
-        m_spiderBatchNode->initWithTexture(m_spiderSprite->getTexture(), 25);
+        m_spiderSprite->retain();
+        if (hasExisted) {
+            m_spiderBatchNode->removeFromParent();
+            m_spiderBatchNode->release();
+        }
+        m_spiderBatchNode = DummyNode::createWithTexture(m_spiderSprite->getTexture(), 25);
+        m_spiderBatchNode->retain();
         m_spiderBatchNode->addChild(m_spiderSprite);
+        if (hasExisted && m_isSpider) m_mainLayer->addChild(m_spiderBatchNode, 2);
+        m_spiderSprite->release();
     }
 
     void updatePlayerSwingFrame(int frame) {
@@ -304,12 +325,13 @@ class $modify(MIPlayerObject, PlayerObject) {
         auto trailFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("trail", dual), "");
         if (trailFile.empty() || !MoreIcons::hasTrail(trailFile)) return;
 
+        auto trailInfo = MoreIcons::TRAIL_INFO[trailFile];
         m_streakRelated1 = 14.0f;
-        m_streakRelated2 = true;
+        m_streakRelated2 = !trailInfo.tint;
         m_streakRelated3 = false;
         if (m_regularTrail) m_regularTrail->removeFromParent();
-        m_regularTrail = CCMotionStreak::create(0.3f, 5.0f, 14.0f, { 255, 255, 255 },
-            CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_TEXTURES[trailFile].c_str()));
+        m_regularTrail = CCMotionStreak::create(trailInfo.blend ? 0.3f : 1.0f, 5.0f, 14.0f, { 255, 255, 255 },
+            CCTextureCache::get()->textureForKey(trailInfo.texture.c_str()));
         #if defined(GEODE_IS_ANDROID32)
         *reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(m_regularTrail) + 0x168) = 50.0f;
         #elif defined(GEODE_IS_ANDROID64)

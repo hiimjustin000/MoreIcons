@@ -247,7 +247,16 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                     auto popup = ItemInfoPopup::create(1, unlockType);
                     if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0)) nameLabel->setString(name.c_str());
                     if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
-                    if (auto popupIcon = getChildOfType<GJItemIcon>(popup->m_mainLayer, 0)) MoreIcons::changeSimplePlayer(popupIcon->m_player, name, m_iconType);
+                    if (Loader::get()->isModLoaded("thesillydoggo.animatedprofiles")) {
+                        for (auto buttonChild : CCArrayExt<CCNode*>(popup->m_buttonMenu->getChildren())) {
+                            if (auto possibleButton = typeinfo_cast<CCMenuItemSpriteExtra*>(buttonChild)) {
+                                if (auto possibleIcon = typeinfo_cast<GJItemIcon*>(possibleButton->getNormalImage())) {
+                                    MoreIcons::changeSimplePlayer(possibleIcon->m_player, name, m_iconType);
+                                }
+                            }
+                        }
+                    }
+                    else if (auto popupIcon = getChildOfType<GJItemIcon>(popup->m_mainLayer, 0)) MoreIcons::changeSimplePlayer(popupIcon->m_player, name, m_iconType);
                     if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
                         fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
                     popup->show();
@@ -312,13 +321,14 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         for (auto name : MoreIcons::getPage(m_iconType, f->m_page)) {
             auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
             square->setColor({ 150, 150, 150 });
-            auto streak = CCSprite::createWithTexture(CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_TEXTURES[name].c_str()));
+            auto texture = CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_INFO[name].texture.c_str());
+            auto streak = CCSprite::createWithTexture(texture);
             limitNodeWidth(streak, 27.0f, 99.0f, 0.01f);
             streak->setRotation(90.0f);
             square->addChild(streak);
             streak->setPosition(square->getContentSize() / 2);
             square->setScale(0.8f);
-            auto iconButton = CCMenuItemExt::createSpriteExtra(square, [this, name, sdi, dual, savedType, unlockType](CCMenuItemSpriteExtra* sender) {
+            auto iconButton = CCMenuItemExt::createSpriteExtra(square, [this, name, texture, winSize, sdi, dual, savedType, unlockType](CCMenuItemSpriteExtra* sender) {
                 m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
                 m_cursor1->setVisible(true);
                 auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
@@ -330,17 +340,44 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                         popupIcon->setVisible(false);
                         auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
                         square->setColor({ 150, 150, 150 });
-                        auto streak = CCSprite::createWithTexture(CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_TEXTURES[name].c_str()));
+                        auto streak = CCSprite::createWithTexture(texture);
                         limitNodeWidth(streak, 27.0f, 99.0f, 0.01f);
                         streak->setRotation(90.0f);
                         square->addChild(streak);
                         streak->setPosition(square->getContentSize() / 2);
                         square->setPosition(popupIcon->getPosition());
                         square->setScale(popupIcon->getScale());
+                        square->setID("trail-square"_spr);
                         popup->m_mainLayer->addChild(square);
                     }
                     if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
                         fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
+                    auto blendToggler = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [this, name](CCMenuItemToggler* sender) {
+                        MoreIcons::TRAIL_INFO[name].blend = !sender->isToggled();
+                    });
+                    blendToggler->setPosition(popup->m_buttonMenu->convertToNodeSpace(winSize / 2 - CCPoint { 123.0f, 78.0f }));
+                    blendToggler->toggle(MoreIcons::TRAIL_INFO[name].blend);
+                    blendToggler->setID("blend-toggler"_spr);
+                    popup->m_buttonMenu->addChild(blendToggler);
+                    auto blendLabel = CCLabelBMFont::create("Blend", "bigFont.fnt");
+                    blendLabel->setPosition(winSize / 2 - CCPoint { 112.0f, 78.0f });
+                    blendLabel->setAnchorPoint({ 0.0f, 0.5f });
+                    blendLabel->setScale(0.3f);
+                    blendLabel->setID("blend-label"_spr);
+                    popup->m_mainLayer->addChild(blendLabel);
+                    auto tintToggler = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [this, name](CCMenuItemToggler* sender) {
+                        MoreIcons::TRAIL_INFO[name].tint = !sender->isToggled();
+                    });
+                    tintToggler->setPosition(popup->m_buttonMenu->convertToNodeSpace(winSize / 2 - CCPoint { 123.0f, 98.0f }));
+                    tintToggler->toggle(MoreIcons::TRAIL_INFO[name].tint);
+                    tintToggler->setID("tint-toggler"_spr);
+                    popup->m_buttonMenu->addChild(tintToggler);
+                    auto tintLabel = CCLabelBMFont::create("Tint", "bigFont.fnt");
+                    tintLabel->setPosition(winSize / 2 - CCPoint { 112.0f, 98.0f });
+                    tintLabel->setAnchorPoint({ 0.0f, 0.5f });
+                    tintLabel->setScale(0.3f);
+                    tintLabel->setID("tint-label"_spr);
+                    popup->m_mainLayer->addChild(tintLabel);
                     popup->show();
                 }
                 if (dual) sdi->setSavedValue("lasttype", (int)m_iconType);

@@ -6,6 +6,17 @@ $on_mod(Loaded) {
     MoreIcons::load();
 }
 
+$on_mod(DataSaved) {
+    for (auto& [trail, info] : MoreIcons::TRAIL_INFO) {
+        std::fstream file(std::filesystem::path(info.texture).replace_extension(".json"), std::ios::out);
+        file << matjson::Value(matjson::Object{
+            { "blend", info.blend },
+            { "tint", info.tint },
+        }).dump();
+        file.close();
+    }
+}
+
 // https://github.com/GlobedGD/globed2/blob/v1.6.2/src/util/cocos.cpp#L44
 namespace {
     template <typename TC>
@@ -83,10 +94,7 @@ std::vector<std::filesystem::path> MoreIcons::getTexturePacks() {
     return packs;
 }
 
-void MoreIcons::loadIcons(
-    const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates,
-    std::unordered_map<std::string, std::string>& textures, IconType type, bool create
-) {
+void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates, IconType type, bool create) {
     auto folder = path.filename().string();
     log::info("Loading {}s from {}", folder, path.string());
     if (LOADING_LAYER)
@@ -98,8 +106,67 @@ void MoreIcons::loadIcons(
 
     auto textureCache = CCTextureCache::get();
     auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
+    auto spriteFrameCache = CCSpriteFrameCache::sharedSpriteFrameCache();
     for (auto& entry : naturalSort(path)) {
-        if (!entry.is_regular_file()) continue;
+        if (!entry.is_regular_file() && !entry.is_directory()) continue;
+
+        if (entry.is_directory()) {
+            auto entryPath = entry.path();
+
+            auto name = entryPath.stem().string();
+            if (std::find(list.begin(), list.end(), name) != list.end()) {
+                duplicates.push_back(name);
+                name += fmt::format("_{:02}", std::count(duplicates.begin(), duplicates.end(), name));
+            }
+
+            for (auto& subEntry : naturalSort(entryPath)) {
+                if (!subEntry.is_regular_file()) continue;
+
+                auto subEntryPath = subEntry.path();
+                if (subEntryPath.extension() != ".png") continue;
+
+                auto pathFilename = subEntryPath.filename().string();
+                auto fileQuality = kTextureQualityLow;
+                if (pathFilename.find("-uhd.png") != std::string::npos) {
+                    auto hdExists = std::filesystem::exists(string::replace(subEntryPath.string(), "-uhd.png", "-hd.png"));
+                    if (hdExists || textureQuality != kTextureQualityHigh) {
+                        if (!hdExists) log::warn("Ignoring too high quality PNG file: {}", entryPath.filename() / pathFilename);
+                        continue;
+                    }
+                    else fileQuality = kTextureQualityHigh;
+                }
+                else if (pathFilename.find("-hd.png") != std::string::npos) {
+                    auto sdExists = std::filesystem::exists(string::replace(subEntryPath.string(), "-hd.png", ".png"));
+                    if (sdExists || (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium)) {
+                        if (!sdExists) log::warn("Ignoring too high quality PNG file: {}", entryPath.filename() / pathFilename);
+                        continue;
+                    }
+                    else fileQuality = kTextureQualityMedium;
+                }
+
+                auto pngPath = subEntryPath.string();
+                auto noGraphicPngPath = string::replace(string::replace(pngPath, "-uhd.png", ".png"), "-hd.png", ".png");
+                auto possibleUHD = string::replace(noGraphicPngPath, ".png", "-uhd.png");
+                auto possibleHD = string::replace(noGraphicPngPath, ".png", "-hd.png");
+                auto usedTextureQuality = kTextureQualityLow;
+                if (textureQuality == kTextureQualityHigh && (fileQuality == kTextureQualityHigh || std::filesystem::exists(possibleUHD))) {
+                    pngPath = possibleUHD;
+                    usedTextureQuality = kTextureQualityHigh;
+                }
+                else if (textureQuality == kTextureQualityMedium && (fileQuality == kTextureQualityMedium || std::filesystem::exists(possibleHD))) {
+                    pngPath = possibleHD;
+                    usedTextureQuality = kTextureQualityMedium;
+                }
+
+                auto texture = textureCache->addImage(pngPath.c_str(), false);
+                spriteFrameCache->addSpriteFrame(
+                    CCSpriteFrame::createWithTexture(texture, { { 0.0f, 0.0f }, texture->getContentSize() }),
+                    getFrameName(std::filesystem::path(noGraphicPngPath).filename().string(), name, type).c_str()
+                );
+            }
+            list.push_back(name);
+            continue;
+        }
 
         auto entryPath = entry.path();
         if (entryPath.extension() != ".plist") continue;
@@ -157,7 +224,6 @@ void MoreIcons::loadIcons(
         _addSpriteFramesWithDictionary(dict, textureCache->addImage(fullTexturePath.c_str(), false));
         dict->release();
         list.push_back(name);
-        textures.emplace(name, fullTexturePath);
     }
 
     Mod::get()->setSavedValue(path.filename().string() + "s", list);
@@ -180,6 +246,22 @@ void MoreIcons::loadTrails(const std::filesystem::path& path, std::vector<std::s
         auto entryPath = entry.path();
         if (entryPath.extension() != ".png") continue;
 
+        auto jsonPath = std::filesystem::path(entryPath).replace_extension(".json");
+        matjson::Value json;
+        if (!std::filesystem::exists(jsonPath)) json = matjson::Object { { "blend", false }, { "tint", false } };
+        else {
+            std::ifstream file(jsonPath);
+            std::stringstream bufferStream;
+            bufferStream << file.rdbuf();
+            std::string error;
+            auto tryJson = matjson::parse(bufferStream.str(), error);
+            if (!error.empty()) {
+                log::warn("Failed to parse JSON file {}: {}", jsonPath.filename().string(), error);
+                json = matjson::Object { { "blend", false }, { "tint", false } };
+            }
+            else json = tryJson.value_or(matjson::Object { { "blend", false }, { "tint", false } });
+        }
+
         auto name = entryPath.stem().string();
         if (std::find(TRAILS.begin(), TRAILS.end(), name) != TRAILS.end()) {
             duplicates.push_back(name);
@@ -189,7 +271,11 @@ void MoreIcons::loadTrails(const std::filesystem::path& path, std::vector<std::s
         auto fullTexturePath = entryPath.string();
         textureCache->addImage(fullTexturePath.c_str(), false);
         TRAILS.push_back(name);
-        TRAIL_TEXTURES.emplace(name, fullTexturePath);
+        TRAIL_INFO.emplace(name, TrailInfo {
+            .texture = fullTexturePath,
+            .blend = json.contains("blend") && json["blend"].is_bool() ? json["blend"].as_bool() : false,
+            .tint = json.contains("tint") && json["tint"].is_bool() ? json["tint"].as_bool() : false,
+        });
     }
 }
 

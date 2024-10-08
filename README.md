@@ -4,7 +4,7 @@ A mod that loads custom icons.
 [YouTube Tutorial](https://youtu.be/s2AM98Yj59k)
 
 ## Adding Icons
-To add a custom icon, you need an icon spritesheet (.plist) and an icon atlas (.png).
+To add a custom icon, you need an icon spritesheet (.plist) and an icon atlas (.png). Tools like [GDBrowser's Icon Kit](https://gdbrowser.com/iconkit) can be used to create these spritesheets and atlases, with the "Developer Mode" option enabled in the settings.
 
 The spritesheet should be in the format of a typical Geometry Dash icon spritesheet, with the primary sprite, secondary sprite, glow sprite, and an optional detail sprite. UFOs contain a fifth sprite for the dome.
 
@@ -30,6 +30,8 @@ The spritesheets and atlases should be placed in `(Geometry Dash folder)/geode/c
 - swing
 - jetpack
 
+This can also be done with individual images per icon piece, with the same naming conventions as above. The sprites should be placed in `(Geometry Dash folder)/geode/config/hiimjustin000.more_icons/(gamemode)/(icon name)`, where `(icon name)` is the name of the icon.
+
 If anything goes wrong, the mod will log warnings and errors to the console, which can be checked in `(Geometry Dash folder)/geode/logs`.
 
 ## Texture Packs
@@ -43,6 +45,10 @@ Note that this will only work if the texture pack has a `pack.json` file in the 
 To use a custom icon, you will need to go into the icon kit. In the icon kit, there is a second row of dots that you can click on to view the extra icons. Click on the dot to view a page of extra icons, and click on one of the icons to select it.
 
 To deselect a custom icon, use the first row of dots to go back to the default icons, and click on one of the default icons to select it.
+
+## Credits
+- [DeepResonanceX](https://gdbrowser.com/u/5668656) - Idea for the mod
+- [hiimjustin000](https://gdbrowser.com/u/7466002) - Creator of the mod
 
 # License
 This mod is licensed under the [MIT License](./LICENSE).

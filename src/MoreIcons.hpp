@@ -1,3 +1,9 @@
+struct TrailInfo {
+    std::string texture;
+    bool blend;
+    bool tint;
+};
+
 class MoreIcons {
 public:
     static inline std::vector<std::string> ICONS;
@@ -6,13 +12,11 @@ public:
     static inline std::vector<std::string> UFOS;
     static inline std::vector<std::string> WAVES;
     static inline std::vector<std::string> ROBOTS;
-    static inline std::unordered_map<std::string, std::string> ROBOT_TEXTURES;
     static inline std::vector<std::string> SPIDERS;
-    static inline std::unordered_map<std::string, std::string> SPIDER_TEXTURES;
     static inline std::vector<std::string> SWINGS;
     static inline std::vector<std::string> JETPACKS;
     static inline std::vector<std::string> TRAILS;
-    static inline std::unordered_map<std::string, std::string> TRAIL_TEXTURES;
+    static inline std::unordered_map<std::string, TrailInfo> TRAIL_INFO;
     static inline LoadingLayer* LOADING_LAYER = nullptr;
 
     static bool hasIcon(const std::string& name) {
@@ -67,32 +71,30 @@ public:
         WAVES.clear();
         geode::Mod::get()->setSavedValue("waves", WAVES);
         ROBOTS.clear();
-        ROBOT_TEXTURES.clear();
         geode::Mod::get()->setSavedValue("robots", ROBOTS);
         SPIDERS.clear();
-        SPIDER_TEXTURES.clear();
         geode::Mod::get()->setSavedValue("spiders", SPIDERS);
         SWINGS.clear();
         geode::Mod::get()->setSavedValue("swings", SWINGS);
         JETPACKS.clear();
         geode::Mod::get()->setSavedValue("jetpacks", JETPACKS);
         TRAILS.clear();
+        TRAIL_INFO.clear();
         geode::Mod::get()->setSavedValue("trails", TRAILS);
     }
     static void load() {
-        std::unordered_map<std::string, std::string> tempMap;
         auto packs = getTexturePacks();
         auto packSize = packs.size();
         std::vector<std::string> duplicates;
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "icon", ICONS, duplicates, tempMap, IconType::Cube, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ship", SHIPS, duplicates, tempMap, IconType::Ship, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ball", BALLS, duplicates, tempMap, IconType::Ball, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ufo", UFOS, duplicates, tempMap, IconType::Ufo, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "wave", WAVES, duplicates, tempMap, IconType::Wave, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "robot", ROBOTS, duplicates, ROBOT_TEXTURES, IconType::Robot, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "spider", SPIDERS, duplicates, SPIDER_TEXTURES, IconType::Spider, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "swing", SWINGS, duplicates, tempMap, IconType::Swing, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "jetpack", JETPACKS, duplicates, tempMap, IconType::Jetpack, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "icon", ICONS, duplicates, IconType::Cube, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ship", SHIPS, duplicates, IconType::Ship, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ball", BALLS, duplicates, IconType::Ball, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ufo", UFOS, duplicates, IconType::Ufo, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "wave", WAVES, duplicates, IconType::Wave, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "robot", ROBOTS, duplicates, IconType::Robot, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "spider", SPIDERS, duplicates, IconType::Spider, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "swing", SWINGS, duplicates, IconType::Swing, i == 0);
+        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "jetpack", JETPACKS, duplicates, IconType::Jetpack, i == 0);
         duplicates.clear();
         for (int i = 0; i < packSize; i++) loadTrails(packs[i] / "trail", duplicates, i == 0);
         duplicates.clear();
@@ -102,7 +104,7 @@ public:
     static std::vector<std::filesystem::path> getTexturePacks();
     static void loadIcons(
         const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates,
-        std::unordered_map<std::string, std::string>& textures, IconType type, bool create
+        IconType type, bool create
     );
     static void loadTrails(const std::filesystem::path& path, std::vector<std::string>& duplicates, bool create);
     static void changeSimplePlayer(SimplePlayer* player, IconType type) {
@@ -215,16 +217,14 @@ public:
     }
 
     static void useCustomRobot(GJRobotSprite* robot, const std::string& robotFile) {
-        if (robotFile.empty() || !MoreIcons::hasRobot(robotFile)) return;
+        if (!robot || robotFile.empty() || !MoreIcons::hasRobot(robotFile)) return;
         robot->setBatchNode(nullptr);
-        robot->setTexture(cocos2d::CCTextureCache::get()->textureForKey(MoreIcons::ROBOT_TEXTURES[robotFile].c_str()));
         useCustomSprite(robot, robotFile);
     }
 
     static void useCustomSpider(GJSpiderSprite* spider, const std::string& spiderFile) {
-        if (spiderFile.empty() || !MoreIcons::hasSpider(spiderFile)) return;
+        if (!spider || spiderFile.empty() || !MoreIcons::hasSpider(spiderFile)) return;
         spider->setBatchNode(nullptr);
-        spider->setTexture(cocos2d::CCTextureCache::get()->textureForKey(MoreIcons::SPIDER_TEXTURES[spiderFile].c_str()));
         useCustomSprite(spider, spiderFile);
     }
 
