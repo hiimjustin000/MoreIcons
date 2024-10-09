@@ -61,53 +61,83 @@ public:
 
     static void clear() {
         ICONS.clear();
-        geode::Mod::get()->setSavedValue("icons", ICONS);
         SHIPS.clear();
-        geode::Mod::get()->setSavedValue("ships", SHIPS);
         BALLS.clear();
-        geode::Mod::get()->setSavedValue("balls", BALLS);
         UFOS.clear();
-        geode::Mod::get()->setSavedValue("ufos", UFOS);
         WAVES.clear();
-        geode::Mod::get()->setSavedValue("waves", WAVES);
         ROBOTS.clear();
-        geode::Mod::get()->setSavedValue("robots", ROBOTS);
         SPIDERS.clear();
-        geode::Mod::get()->setSavedValue("spiders", SPIDERS);
         SWINGS.clear();
-        geode::Mod::get()->setSavedValue("swings", SWINGS);
         JETPACKS.clear();
-        geode::Mod::get()->setSavedValue("jetpacks", JETPACKS);
         TRAILS.clear();
         saveTrails();
         TRAIL_INFO.clear();
+        removeSaved();
+    }
+
+    static void removeSaved() {
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("icons", {});
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("ships", {});
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("balls", {});
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("ufos", {});
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("waves", {});
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("robots", {});
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("spiders", {});
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("swings", {});
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("jetpacks", {});
+        geode::Mod::get()->setSavedValue<std::vector<std::string>>("trails", {});
+    }
+
+    static void restoreSaved() {
+        geode::Mod::get()->setSavedValue("icons", ICONS);
+        geode::Mod::get()->setSavedValue("ships", SHIPS);
+        geode::Mod::get()->setSavedValue("balls", BALLS);
+        geode::Mod::get()->setSavedValue("ufos", UFOS);
+        geode::Mod::get()->setSavedValue("waves", WAVES);
+        geode::Mod::get()->setSavedValue("robots", ROBOTS);
+        geode::Mod::get()->setSavedValue("spiders", SPIDERS);
+        geode::Mod::get()->setSavedValue("swings", SWINGS);
+        geode::Mod::get()->setSavedValue("jetpacks", JETPACKS);
         geode::Mod::get()->setSavedValue("trails", TRAILS);
     }
+
     static void load() {
         auto packs = getTexturePacks();
         auto packSize = packs.size();
         std::vector<std::string> duplicates;
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "icon", ICONS, duplicates, IconType::Cube, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ship", SHIPS, duplicates, IconType::Ship, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ball", BALLS, duplicates, IconType::Ball, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "ufo", UFOS, duplicates, IconType::Ufo, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "wave", WAVES, duplicates, IconType::Wave, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "robot", ROBOTS, duplicates, IconType::Robot, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "spider", SPIDERS, duplicates, IconType::Spider, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "swing", SWINGS, duplicates, IconType::Swing, i == 0);
-        for (int i = 0; i < packSize; i++) loadIcons(packs[i] / "jetpack", JETPACKS, duplicates, IconType::Jetpack, i == 0);
+        loadIcons(packs, "icon", ICONS, duplicates, IconType::Cube);
+        loadIcons(packs, "ship", SHIPS, duplicates, IconType::Ship);
+        loadIcons(packs, "ball", BALLS, duplicates, IconType::Ball);
+        loadIcons(packs, "ufo", UFOS, duplicates, IconType::Ufo);
+        loadIcons(packs, "wave", WAVES, duplicates, IconType::Wave);
+        loadIcons(packs, "robot", ROBOTS, duplicates, IconType::Robot);
+        loadIcons(packs, "spider", SPIDERS, duplicates, IconType::Spider);
+        loadIcons(packs, "swing", SWINGS, duplicates, IconType::Swing);
+        loadIcons(packs, "jetpack", JETPACKS, duplicates, IconType::Jetpack);
         duplicates.clear();
-        for (int i = 0; i < packSize; i++) loadTrails(packs[i] / "trail", duplicates, i == 0);
+        loadTrails(packs, duplicates);
         duplicates.clear();
-        if (LOADING_LAYER) static_cast<cocos2d::CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))->setString("");
+        if (LOADING_LAYER) {
+            if (auto smallLabel2 = static_cast<cocos2d::CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))) smallLabel2->setString("");
+        }
+        restoreSaved();
     }
+
     static std::vector<std::filesystem::directory_entry> naturalSort(const std::filesystem::path& path);
+
     static std::vector<std::filesystem::path> getTexturePacks();
+
     static void loadIcons(
-        const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates,
-        IconType type, bool create
+        const std::vector<std::filesystem::path>& packs, const std::string& suffix,
+        std::vector<std::string>& list, std::vector<std::string>& duplicates, IconType type
     );
-    static void loadTrails(const std::filesystem::path& path, std::vector<std::string>& duplicates, bool create);
+
+    static void loadIcon(const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates, IconType type);
+
+    static void loadTrails(const std::vector<std::filesystem::path>& packs, std::vector<std::string>& duplicates);
+
+    static void loadTrail(const std::filesystem::path& path, std::vector<std::string>& duplicates);
+
     static void saveTrails() {
         for (auto& [trail, info] : MoreIcons::TRAIL_INFO) {
             std::fstream file(std::filesystem::path(info.texture).replace_extension(".json"), std::ios::out);
@@ -118,19 +148,25 @@ public:
             file.close();
         }
     }
+
     static void changeSimplePlayer(SimplePlayer* player, IconType type) {
         changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);
     }
+
     static void changeSimplePlayer(SimplePlayer* player, IconType type, bool dual) {
         changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type, dual), ""), type);
     }
+
     static void changeSimplePlayer(SimplePlayer*, const std::string&, IconType);
+
     static bool doesExist(cocos2d::CCSpriteFrame* frame) {
         return frame != nullptr && frame->getTag() != 105871529;
     }
+
     static std::string getDual(const std::string& name, bool dual) {
         return geode::Loader::get()->isModLoaded("weebify.separate_dual_icons") && dual ? name + "-dual" : name;
     }
+
     static void swapDual(const std::string& name) {
         auto dualName = name + "-dual";
         auto normalIcon = geode::Mod::get()->getSavedValue<std::string>(name, "");

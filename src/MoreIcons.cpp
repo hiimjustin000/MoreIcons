@@ -13,15 +13,14 @@ namespace {
 
     template <typename TC, priv_method_t<TC> func>
     struct priv_caller {
-        friend void _addSpriteFramesWithDictionary(CCDictionary* p1, CCTexture2D* p2) {
-            auto* obj = CCSpriteFrameCache::sharedSpriteFrameCache();
-            (obj->*func)(p1, p2);
+        friend void _addSpriteFramesWithDictionary(CCDictionary* dict, CCTexture2D* texture) {
+            (CCSpriteFrameCache::get()->*func)(dict, texture);
         }
     };
 
     template struct priv_caller<CCSpriteFrameCache, &CCSpriteFrameCache::addSpriteFramesWithDictionary>;
 
-    void _addSpriteFramesWithDictionary(CCDictionary* p1, CCTexture2D* p2);
+    void _addSpriteFramesWithDictionary(CCDictionary*, CCTexture2D*);
 }
 
 std::vector<std::filesystem::directory_entry> MoreIcons::naturalSort(const std::filesystem::path& path) {
@@ -83,103 +82,134 @@ std::vector<std::filesystem::path> MoreIcons::getTexturePacks() {
     return packs;
 }
 
-void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates, IconType type, bool create) {
-    auto folder = path.filename().string();
-    log::info("Loading {}s from {}", folder, path.string());
-    if (LOADING_LAYER)
-        static_cast<CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))->setString(fmt::format("More Icons: Loading {}s", folder).c_str());
-    if (!std::filesystem::exists(path)) {
-        if (create) std::filesystem::create_directories(path);
-        return;
+void MoreIcons::loadIcons(
+    const std::vector<std::filesystem::path>& packs, const std::string& suffix,
+    std::vector<std::string>& list, std::vector<std::string>& duplicates, IconType type
+) {
+    if (LOADING_LAYER) {
+        if (auto smallLabel2 = static_cast<CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))) {
+            auto loadStr = "";
+            switch (type) {
+                case IconType::Cube: loadStr = "More Icons: Loading Cubes"; break;
+                case IconType::Ship: loadStr = "More Icons: Loading Ships"; break;
+                case IconType::Ball: loadStr = "More Icons: Loading Balls"; break;
+                case IconType::Ufo: loadStr = "More Icons: Loading UFOs"; break;
+                case IconType::Wave: loadStr = "More Icons: Loading Waves"; break;
+                case IconType::Robot: loadStr = "More Icons: Loading Robots"; break;
+                case IconType::Spider: loadStr = "More Icons: Loading Spiders"; break;
+                case IconType::Swing: loadStr = "More Icons: Loading Swings"; break;
+                case IconType::Jetpack: loadStr = "More Icons: Loading Jetpacks"; break;
+                default: break;
+            }
+            smallLabel2->setString(loadStr);
+        }
     }
 
-    auto textureCache = CCTextureCache::get();
-    auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
-    auto spriteFrameCache = CCSpriteFrameCache::sharedSpriteFrameCache();
-    for (auto& entry : naturalSort(path)) {
-        if (!entry.is_regular_file() && !entry.is_directory()) continue;
-
-        if (entry.is_directory()) {
-            auto entryPath = entry.path();
-
-            auto name = entryPath.stem().string();
-            if (std::find(list.begin(), list.end(), name) != list.end()) {
-                duplicates.push_back(name);
-                name += fmt::format("_{:02}", std::count(duplicates.begin(), duplicates.end(), name));
-            }
-
-            for (auto& subEntry : naturalSort(entryPath)) {
-                if (!subEntry.is_regular_file()) continue;
-
-                auto subEntryPath = subEntry.path();
-                if (subEntryPath.extension() != ".png") continue;
-
-                auto pathFilename = subEntryPath.filename().string();
-                auto fileQuality = kTextureQualityLow;
-                if (pathFilename.find("-uhd.png") != std::string::npos) {
-                    auto hdExists = std::filesystem::exists(string::replace(subEntryPath.string(), "-uhd.png", "-hd.png"));
-                    if (hdExists || textureQuality != kTextureQualityHigh) {
-                        if (!hdExists) log::warn("Ignoring too high quality PNG file: {}", entryPath.filename() / pathFilename);
-                        continue;
-                    }
-                    else fileQuality = kTextureQualityHigh;
-                }
-                else if (pathFilename.find("-hd.png") != std::string::npos) {
-                    auto sdExists = std::filesystem::exists(string::replace(subEntryPath.string(), "-hd.png", ".png"));
-                    if (sdExists || (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium)) {
-                        if (!sdExists) log::warn("Ignoring too high quality PNG file: {}", entryPath.filename() / pathFilename);
-                        continue;
-                    }
-                    else fileQuality = kTextureQualityMedium;
-                }
-
-                auto pngPath = subEntryPath.string();
-                auto noGraphicPngPath = string::replace(string::replace(pngPath, "-uhd.png", ".png"), "-hd.png", ".png");
-                auto possibleUHD = string::replace(noGraphicPngPath, ".png", "-uhd.png");
-                auto possibleHD = string::replace(noGraphicPngPath, ".png", "-hd.png");
-                auto usedTextureQuality = kTextureQualityLow;
-                if (textureQuality == kTextureQualityHigh && (fileQuality == kTextureQualityHigh || std::filesystem::exists(possibleUHD))) {
-                    pngPath = possibleUHD;
-                    usedTextureQuality = kTextureQualityHigh;
-                }
-                else if (textureQuality == kTextureQualityMedium && (fileQuality == kTextureQualityMedium || std::filesystem::exists(possibleHD))) {
-                    pngPath = possibleHD;
-                    usedTextureQuality = kTextureQualityMedium;
-                }
-
-                auto texture = textureCache->addImage(pngPath.c_str(), false);
-                spriteFrameCache->addSpriteFrame(
-                    CCSpriteFrame::createWithTexture(texture, { { 0.0f, 0.0f }, texture->getContentSize() }),
-                    getFrameName(std::filesystem::path(noGraphicPngPath).filename().string(), name, type).c_str()
-                );
-            }
-            list.push_back(name);
+    int i = 0;
+    for (auto& packPath : packs) {
+        auto path = packPath / suffix;
+        if (!std::filesystem::exists(path)) {
+            if (i == 0) std::filesystem::create_directories(path);
             continue;
         }
+        log::info("Loading {}s from {}", suffix, path.string());
 
-        auto entryPath = entry.path();
-        if (entryPath.extension() != ".plist") continue;
+        auto textureCache = CCTextureCache::get();
+        auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
+        auto spriteFrameCache = CCSpriteFrameCache::get();
+        for (auto& entry : naturalSort(path)) {
+            if (!entry.is_regular_file() && !entry.is_directory()) continue;
 
-        auto pathFilename = entryPath.filename().string();
+            loadIcon(entry.path(), list, duplicates, type);
+        }
+
+        i++;
+    }
+}
+
+void MoreIcons::loadIcon(const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates, IconType type) {
+    if (!std::filesystem::exists(path)) return;
+
+    auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
+    if (std::filesystem::is_directory(path)) {
+        auto name = path.stem().string();
+        if (std::find(list.begin(), list.end(), name) != list.end()) {
+            duplicates.push_back(name);
+            name += fmt::format("_{:02}", std::count(duplicates.begin(), duplicates.end(), name));
+        }
+
+        auto textureCache = CCTextureCache::get();
+        auto spriteFrameCache = CCSpriteFrameCache::get();
+        for (auto& subEntry : naturalSort(path)) {
+            if (!subEntry.is_regular_file()) continue;
+
+            auto subEntryPath = subEntry.path();
+            if (subEntryPath.extension() != ".png") continue;
+
+            auto pathFilename = subEntryPath.filename().string();
+            auto fileQuality = kTextureQualityLow;
+            if (pathFilename.find("-uhd.png") != std::string::npos) {
+                auto hdExists = std::filesystem::exists(string::replace(subEntryPath.string(), "-uhd.png", "-hd.png"));
+                if (hdExists || textureQuality != kTextureQualityHigh) {
+                    if (!hdExists) log::warn("Ignoring too high quality PNG file: {}", path.filename() / pathFilename);
+                    continue;
+                }
+                else fileQuality = kTextureQualityHigh;
+            }
+            else if (pathFilename.find("-hd.png") != std::string::npos) {
+                auto sdExists = std::filesystem::exists(string::replace(subEntryPath.string(), "-hd.png", ".png"));
+                if (sdExists || (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium)) {
+                    if (!sdExists) log::warn("Ignoring too high quality PNG file: {}", path.filename() / pathFilename);
+                    continue;
+                }
+                else fileQuality = kTextureQualityMedium;
+            }
+
+            auto pngPath = subEntryPath.string();
+            auto noGraphicPngPath = string::replace(string::replace(pngPath, "-uhd.png", ".png"), "-hd.png", ".png");
+            auto possibleUHD = string::replace(noGraphicPngPath, ".png", "-uhd.png");
+            auto possibleHD = string::replace(noGraphicPngPath, ".png", "-hd.png");
+            auto usedTextureQuality = kTextureQualityLow;
+            if (textureQuality == kTextureQualityHigh && (fileQuality == kTextureQualityHigh || std::filesystem::exists(possibleUHD))) {
+                pngPath = possibleUHD;
+                usedTextureQuality = kTextureQualityHigh;
+            }
+            else if (textureQuality == kTextureQualityMedium && (fileQuality == kTextureQualityMedium || std::filesystem::exists(possibleHD))) {
+                pngPath = possibleHD;
+                usedTextureQuality = kTextureQualityMedium;
+            }
+
+            auto texture = textureCache->addImage(pngPath.c_str(), false);
+            spriteFrameCache->addSpriteFrame(
+                CCSpriteFrame::createWithTexture(texture, { { 0.0f, 0.0f }, texture->getContentSize() }),
+                getFrameName(std::filesystem::path(noGraphicPngPath).filename().string(), name, type).c_str()
+            );
+        }
+        list.push_back(name);
+    }
+    else if (std::filesystem::is_regular_file(path)) {
+        if (path.extension() != ".plist") return;
+
+        auto pathFilename = path.filename().string();
         auto fileQuality = kTextureQualityLow;
         if (pathFilename.find("-uhd.plist") != std::string::npos) {
-            auto hdExists = std::filesystem::exists(string::replace(entryPath.string(), "-uhd.plist", "-hd.plist"));
+            auto hdExists = std::filesystem::exists(string::replace(path.string(), "-uhd.plist", "-hd.plist"));
             if (hdExists || textureQuality != kTextureQualityHigh) {
                 if (!hdExists) log::warn("Ignoring too high quality plist file: {}", pathFilename);
-                continue;
+                return;
             }
             else fileQuality = kTextureQualityHigh;
         }
         else if (pathFilename.find("-hd.plist") != std::string::npos) {
-            auto sdExists = std::filesystem::exists(string::replace(entryPath.string(), "-hd.plist", ".plist"));
+            auto sdExists = std::filesystem::exists(string::replace(path.string(), "-hd.plist", ".plist"));
             if (sdExists || (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium)) {
                 if (!sdExists) log::warn("Ignoring too high quality plist file: {}", pathFilename);
-                continue;
+                return;
             }
             else fileQuality = kTextureQualityMedium;
         }
 
-        auto plistPath = entryPath.string();
+        auto plistPath = path.string();
         auto noGraphicPlistPath = string::replace(string::replace(plistPath, "-uhd.plist", ".plist"), "-hd.plist", ".plist");
         auto possibleUHD = string::replace(noGraphicPlistPath, ".plist", "-uhd.plist");
         auto possibleHD = string::replace(noGraphicPlistPath, ".plist", "-hd.plist");
@@ -205,67 +235,79 @@ void MoreIcons::loadIcons(const std::filesystem::path& path, std::vector<std::st
         }
         dict->setObject(frames, "frames");
         auto metadata = static_cast<CCDictionary*>(dict->objectForKey("metadata"));
-        auto fullTexturePath = (entryPath.parent_path() / std::filesystem::path(metadata->valueForKey("textureFileName")->getCString()).filename()).string();
+        auto fullTexturePath = (path.parent_path() / std::filesystem::path(metadata->valueForKey("textureFileName")->getCString()).filename()).string();
         if (!std::filesystem::exists(fullTexturePath)) {
             log::warn("Texture file not found: {}", fullTexturePath);
-            continue;
+            return;
         }
-        _addSpriteFramesWithDictionary(dict, textureCache->addImage(fullTexturePath.c_str(), false));
+        _addSpriteFramesWithDictionary(dict, CCTextureCache::get()->addImage(fullTexturePath.c_str(), false));
         dict->release();
         list.push_back(name);
     }
-
-    Mod::get()->setSavedValue(path.filename().string() + "s", list);
 }
 
-void MoreIcons::loadTrails(const std::filesystem::path& path, std::vector<std::string>& duplicates, bool create) {
-    auto folder = path.filename().string();
-    log::info("Loading trails from {}", path.string());
-    if (LOADING_LAYER)
-        static_cast<CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))->setString("More Icons: Loading Trails");
-    if (!std::filesystem::exists(path)) {
-        if (create) std::filesystem::create_directories(path);
-        return;
+void MoreIcons::loadTrails(const std::vector<std::filesystem::path>& packs, std::vector<std::string>& duplicates) {
+    if (LOADING_LAYER) {
+        if (auto smallLabel2 = static_cast<CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2")))
+            smallLabel2->setString("More Icons: Loading Trails");
     }
 
-    auto textureCache = CCTextureCache::get();
-    for (auto& entry : naturalSort(path)) {
-        if (!entry.is_regular_file()) continue;
-
-        auto entryPath = entry.path();
-        if (entryPath.extension() != ".png") continue;
-
-        auto jsonPath = std::filesystem::path(entryPath).replace_extension(".json");
-        matjson::Value json;
-        if (!std::filesystem::exists(jsonPath)) json = matjson::Object { { "blend", false }, { "tint", false } };
-        else {
-            std::ifstream file(jsonPath);
-            std::stringstream bufferStream;
-            bufferStream << file.rdbuf();
-            std::string error;
-            auto tryJson = matjson::parse(bufferStream.str(), error);
-            if (!error.empty()) {
-                log::warn("Failed to parse JSON file {}: {}", jsonPath.filename().string(), error);
-                json = matjson::Object { { "blend", false }, { "tint", false } };
-            }
-            else json = tryJson.value_or(matjson::Object { { "blend", false }, { "tint", false } });
+    int i = 0;
+    for (auto& packPath : packs) {
+        auto path = packPath / "trail";
+        log::info("Loading trails from {}", path.string());
+        if (!std::filesystem::exists(path)) {
+            if (i == 0) std::filesystem::create_directories(path);
+            return;
         }
 
-        auto name = entryPath.stem().string();
-        if (std::find(TRAILS.begin(), TRAILS.end(), name) != TRAILS.end()) {
-            duplicates.push_back(name);
-            name += fmt::format("_{:02}", std::count(duplicates.begin(), duplicates.end(), name));
+        auto textureCache = CCTextureCache::get();
+        for (auto& entry : naturalSort(path)) {
+            if (!entry.is_regular_file()) continue;
+
+            auto entryPath = entry.path();
+            if (entryPath.extension() != ".png") continue;
+
+            loadTrail(entryPath, duplicates);
         }
 
-        auto fullTexturePath = entryPath.string();
-        textureCache->addImage(fullTexturePath.c_str(), false);
-        TRAILS.push_back(name);
-        TRAIL_INFO.emplace(name, TrailInfo {
-            .texture = fullTexturePath,
-            .blend = json.contains("blend") && json["blend"].is_bool() ? json["blend"].as_bool() : false,
-            .tint = json.contains("tint") && json["tint"].is_bool() ? json["tint"].as_bool() : false,
-        });
+        i++;
     }
+}
+
+void MoreIcons::loadTrail(const std::filesystem::path& path, std::vector<std::string>& duplicates) {
+    if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path) || path.extension() != ".png") return;
+
+    auto jsonPath = std::filesystem::path(path).replace_extension(".json");
+    matjson::Value json;
+    if (!std::filesystem::exists(jsonPath)) json = matjson::Object { { "blend", false }, { "tint", false } };
+    else {
+        std::ifstream file(jsonPath);
+        std::stringstream bufferStream;
+        bufferStream << file.rdbuf();
+        std::string error;
+        auto tryJson = matjson::parse(bufferStream.str(), error);
+        if (!error.empty()) {
+            log::warn("Failed to parse JSON file {}: {}", jsonPath.filename().string(), error);
+            json = matjson::Object { { "blend", false }, { "tint", false } };
+        }
+        else json = tryJson.value_or(matjson::Object { { "blend", false }, { "tint", false } });
+    }
+
+    auto name = path.stem().string();
+    if (std::find(TRAILS.begin(), TRAILS.end(), name) != TRAILS.end()) {
+        duplicates.push_back(name);
+        name += fmt::format("_{:02}", std::count(duplicates.begin(), duplicates.end(), name));
+    }
+
+    auto fullTexturePath = path.string();
+    CCTextureCache::get()->addImage(fullTexturePath.c_str(), false);
+    TRAILS.push_back(name);
+    TRAIL_INFO.emplace(name, TrailInfo {
+        .texture = fullTexturePath,
+        .blend = json.contains("blend") && json["blend"].is_bool() ? json["blend"].as_bool() : false,
+        .tint = json.contains("tint") && json["tint"].is_bool() ? json["tint"].as_bool() : false,
+    });
 }
 
 void MoreIcons::changeSimplePlayer(SimplePlayer* player, const std::string& file, IconType iconType) {

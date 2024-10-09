@@ -1,4 +1,8 @@
 # More Icons Changelog
+## v1.2.4 (2024-10-09)
+- Fixed trails not adding to the mod's saved values
+- Removed loaded icons from the mod's saved values when closing the game
+
 ## v1.2.3 (2024-10-08)
 - Fixed blend mode not working properly ([#5](https://github.com/hiimjustin000/MoreIcons/issues/5))
 - Fixed trail customization resetting when reloading textures
