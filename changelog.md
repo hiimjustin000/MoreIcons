@@ -1,4 +1,10 @@
 # More Icons Changelog
+## v1.2.3 (2024-10-08)
+- Fixed blend mode not working properly ([#5](https://github.com/hiimjustin000/MoreIcons/issues/5))
+- Fixed trail customization resetting when reloading textures
+- Fixed trail display in the icon kit
+- Fixed loading text not showing up
+
 ## v1.2.2 (2024-10-08)
 - Added support for individual images per icon piece
 - Added trail customization options ([#5](https://github.com/hiimjustin000/MoreIcons/issues/5))

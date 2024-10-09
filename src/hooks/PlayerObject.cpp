@@ -330,8 +330,8 @@ class $modify(MIPlayerObject, PlayerObject) {
         m_streakRelated2 = !trailInfo.tint;
         m_streakRelated3 = false;
         if (m_regularTrail) m_regularTrail->removeFromParent();
-        m_regularTrail = CCMotionStreak::create(trailInfo.blend ? 0.3f : 1.0f, 5.0f, 14.0f, { 255, 255, 255 },
-            CCTextureCache::get()->textureForKey(trailInfo.texture.c_str()));
+        m_regularTrail = CCMotionStreak::create(0.3f, 5.0f, 14.0f, { 255, 255, 255 }, CCTextureCache::get()->textureForKey(trailInfo.texture.c_str()));
+        if (trailInfo.blend) m_regularTrail->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
         #if defined(GEODE_IS_ANDROID32)
         *reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(m_regularTrail) + 0x168) = 50.0f;
         #elif defined(GEODE_IS_ANDROID64)

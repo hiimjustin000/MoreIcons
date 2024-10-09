@@ -79,6 +79,7 @@ public:
         JETPACKS.clear();
         geode::Mod::get()->setSavedValue("jetpacks", JETPACKS);
         TRAILS.clear();
+        saveTrails();
         TRAIL_INFO.clear();
         geode::Mod::get()->setSavedValue("trails", TRAILS);
     }
@@ -107,6 +108,16 @@ public:
         IconType type, bool create
     );
     static void loadTrails(const std::filesystem::path& path, std::vector<std::string>& duplicates, bool create);
+    static void saveTrails() {
+        for (auto& [trail, info] : MoreIcons::TRAIL_INFO) {
+            std::fstream file(std::filesystem::path(info.texture).replace_extension(".json"), std::ios::out);
+            file << matjson::Value(matjson::Object{
+                { "blend", info.blend },
+                { "tint", info.tint },
+            }).dump();
+            file.close();
+        }
+    }
     static void changeSimplePlayer(SimplePlayer* player, IconType type) {
         changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);
     }

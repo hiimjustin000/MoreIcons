@@ -324,7 +324,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             auto texture = CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_INFO[name].texture.c_str());
             auto streak = CCSprite::createWithTexture(texture);
             limitNodeWidth(streak, 27.0f, 99.0f, 0.01f);
-            streak->setRotation(90.0f);
+            streak->setRotation(-90.0f);
             square->addChild(streak);
             streak->setPosition(square->getContentSize() / 2);
             square->setScale(0.8f);
@@ -342,7 +342,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                         square->setColor({ 150, 150, 150 });
                         auto streak = CCSprite::createWithTexture(texture);
                         limitNodeWidth(streak, 27.0f, 99.0f, 0.01f);
-                        streak->setRotation(90.0f);
+                        streak->setRotation(-90.0f);
                         square->addChild(streak);
                         streak->setPosition(square->getContentSize() / 2);
                         square->setPosition(popupIcon->getPosition());

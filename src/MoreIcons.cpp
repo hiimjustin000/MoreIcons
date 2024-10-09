@@ -2,19 +2,8 @@
 
 using namespace geode::prelude;
 
-$on_mod(Loaded) {
-    MoreIcons::load();
-}
-
 $on_mod(DataSaved) {
-    for (auto& [trail, info] : MoreIcons::TRAIL_INFO) {
-        std::fstream file(std::filesystem::path(info.texture).replace_extension(".json"), std::ios::out);
-        file << matjson::Value(matjson::Object{
-            { "blend", info.blend },
-            { "tint", info.tint },
-        }).dump();
-        file.close();
-    }
+    MoreIcons::saveTrails();
 }
 
 // https://github.com/GlobedGD/globed2/blob/v1.6.2/src/util/cocos.cpp#L44

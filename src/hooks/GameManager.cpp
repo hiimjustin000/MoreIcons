@@ -9,10 +9,4 @@ class $modify(MIGameManager, GameManager) {
 
         if (m_unkBool1) MoreIcons::clear();
     }
-
-    void reloadAllStep5() {
-        GameManager::reloadAllStep5();
-
-        if (m_unkBool1) MoreIcons::load();
-    }
 };

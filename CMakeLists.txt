@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(MoreIcons VERSION 1.2.2)
+project(MoreIcons VERSION 1.2.3)
 
 add_library(${PROJECT_NAME} SHARED
     src/classes/DummyNode.cpp

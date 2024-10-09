@@ -6,6 +6,8 @@ A mod that loads custom icons.
 ## Adding Icons
 To add a custom icon, you need an icon spritesheet (.plist) and an icon atlas (.png). Tools like [GDBrowser's Icon Kit](https://gdbrowser.com/iconkit) can be used to create these spritesheets and atlases, with the "Developer Mode" option enabled in the settings.
 
+With trails, you will only need the trail image (.png). It will be automatically resized to fit the game's resolution.
+
 The spritesheet should be in the format of a typical Geometry Dash icon spritesheet, with the primary sprite, secondary sprite, glow sprite, and an optional detail sprite. UFOs contain a fifth sprite for the dome.
 
 The atlas should be a single image containing all the sprites in the spritesheet. Tools like [Colon's Spritesheet Splitter](https://gdcolon.com/gdsplitter) can be used to split a spritesheet into individual sprites and combine them into an atlas.
