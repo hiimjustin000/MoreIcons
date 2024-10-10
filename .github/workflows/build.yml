@@ -38,6 +38,7 @@ jobs:
         with:
           bindings: hiimjustin000/bindings
           bindings-ref: ccdictionary
+          sdk: nightly
           build-config: ${{ matrix.config.build-config || 'Release' }}
           export-pdb: true
           combine: true
