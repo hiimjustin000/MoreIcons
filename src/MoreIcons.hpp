@@ -1,8 +1,39 @@
+#include <BS_thread_pool.hpp>
+
 struct TrailInfo {
     std::string texture;
     bool blend;
     bool tint;
 };
+
+struct ImageData {
+    cocos2d::CCImage* image;
+    cocos2d::CCDictionary* dict;
+    std::string texturePath;
+    std::string name;
+    std::string frameName;
+    IconType type;
+    bool blend;
+    bool tint;
+};
+
+// https://github.com/GlobedGD/globed2/blob/v1.6.2/src/util/cocos.cpp#L44
+namespace {
+    template <typename TC>
+    using priv_method_t = void(TC::*)(cocos2d::CCDictionary*, cocos2d::CCTexture2D*);
+
+    template <typename TC, priv_method_t<TC> func>
+    struct priv_caller {
+        friend void _addSpriteFramesWithDictionary(cocos2d::CCDictionary* dict, cocos2d::CCTexture2D* texture) {
+            (cocos2d::CCSpriteFrameCache::get()->*func)(dict, texture);
+        }
+    };
+
+    template struct priv_caller<cocos2d::CCSpriteFrameCache, &cocos2d::CCSpriteFrameCache::addSpriteFramesWithDictionary>;
+
+    void _addSpriteFramesWithDictionary(cocos2d::CCDictionary*, cocos2d::CCTexture2D*);
+}
+
 
 class MoreIcons {
 public:
@@ -16,8 +47,14 @@ public:
     static inline std::vector<std::string> SWINGS;
     static inline std::vector<std::string> JETPACKS;
     static inline std::vector<std::string> TRAILS;
+    static inline std::vector<std::string> ALL;
     static inline std::unordered_map<std::string, TrailInfo> TRAIL_INFO;
+    static inline std::vector<std::string> DUPLICATES;
+    static inline std::vector<std::string> TRAIL_DUPLICATES;
     static inline LoadingLayer* LOADING_LAYER = nullptr;
+    static inline std::vector<ImageData> IMAGES;
+    static inline std::mutex IMAGE_MUTEX;
+    static inline IconType LOAD_TYPE = IconType::Cube;
 
     static bool hasIcon(const std::string& name) {
         return !ICONS.empty() && std::find(ICONS.begin(), ICONS.end(), name) != ICONS.end();
@@ -57,6 +94,11 @@ public:
 
     static bool hasTrail(const std::string& name) {
         return !TRAILS.empty() && std::find(TRAILS.begin(), TRAILS.end(), name) != TRAILS.end();
+    }
+
+    static BS::thread_pool& sharedPool() {
+        static BS::thread_pool _sharedPool(std::thread::hardware_concurrency() - 2);
+        return _sharedPool;
     }
 
     static void clear() {
@@ -103,40 +145,81 @@ public:
 
     static void load() {
         auto packs = getTexturePacks();
-        auto packSize = packs.size();
-        std::vector<std::string> duplicates;
-        loadIcons(packs, "icon", ICONS, duplicates, IconType::Cube);
-        loadIcons(packs, "ship", SHIPS, duplicates, IconType::Ship);
-        loadIcons(packs, "ball", BALLS, duplicates, IconType::Ball);
-        loadIcons(packs, "ufo", UFOS, duplicates, IconType::Ufo);
-        loadIcons(packs, "wave", WAVES, duplicates, IconType::Wave);
-        loadIcons(packs, "robot", ROBOTS, duplicates, IconType::Robot);
-        loadIcons(packs, "spider", SPIDERS, duplicates, IconType::Spider);
-        loadIcons(packs, "swing", SWINGS, duplicates, IconType::Swing);
-        loadIcons(packs, "jetpack", JETPACKS, duplicates, IconType::Jetpack);
-        duplicates.clear();
-        loadTrails(packs, duplicates);
-        duplicates.clear();
-        if (LOADING_LAYER) {
-            if (auto smallLabel2 = static_cast<cocos2d::CCLabelBMFont*>(LOADING_LAYER->getChildByID("geode-small-label-2"))) smallLabel2->setString("");
+        { loadIcons(packs, "icon", IconType::Cube); }
+        { loadIcons(packs, "ship", IconType::Ship); }
+        { loadIcons(packs, "ball", IconType::Ball); }
+        { loadIcons(packs, "ufo", IconType::Ufo); }
+        { loadIcons(packs, "wave", IconType::Wave); }
+        { loadIcons(packs, "robot", IconType::Robot); }
+        { loadIcons(packs, "spider", IconType::Spider); }
+        { loadIcons(packs, "swing", IconType::Swing); }
+        { loadIcons(packs, "jetpack", IconType::Jetpack); }
+        { loadTrails(packs); }
+
+        {
+            std::lock_guard lock(IMAGE_MUTEX);
+            auto textureCache = cocos2d::CCTextureCache::get();
+            auto spriteFrameCache = cocos2d::CCSpriteFrameCache::get();
+            for (auto& image : IMAGES) {
+                auto texture = new cocos2d::CCTexture2D();
+                if (texture->initWithImage(image.image)) {
+                    textureCache->m_pTextures->setObject(texture, image.texturePath);
+                    if (!image.dict && !image.frameName.empty())
+                        spriteFrameCache->addSpriteFrame(
+                            cocos2d::CCSpriteFrame::createWithTexture(texture, { { 0, 0 }, texture->getContentSize() }),
+                            image.frameName.c_str()
+                        );
+                    else if (image.dict) {
+                        _addSpriteFramesWithDictionary(image.dict, texture);
+                        CC_SAFE_RELEASE(image.dict);
+                    }
+                    vectorForType(image.type).push_back(image.name);
+                    if (image.type == IconType::Special) {
+                        TRAIL_INFO[image.name] = {
+                            .texture = image.texturePath,
+                            .blend = image.blend,
+                            .tint = image.tint
+                        };
+                    }
+                }
+
+                texture->release();
+                CC_SAFE_RELEASE(image.image);
+            }
+
+            IMAGES.clear();
+            restoreSaved();
+            ALL.clear();
+            DUPLICATES.clear();
+            TRAIL_DUPLICATES.clear();
+            naturalSort(ICONS);
+            naturalSort(SHIPS);
+            naturalSort(BALLS);
+            naturalSort(UFOS);
+            naturalSort(WAVES);
+            naturalSort(ROBOTS);
+            naturalSort(SPIDERS);
+            naturalSort(SWINGS);
+            naturalSort(JETPACKS);
+            naturalSort(TRAILS);
         }
-        restoreSaved();
     }
 
     static std::vector<std::filesystem::directory_entry> naturalSort(const std::filesystem::path& path);
 
+    static void naturalSort(std::vector<std::string>& vec);
+
     static std::vector<std::filesystem::path> getTexturePacks();
 
     static void loadIcons(
-        const std::vector<std::filesystem::path>& packs, const std::string& suffix,
-        std::vector<std::string>& list, std::vector<std::string>& duplicates, IconType type
+        const std::vector<std::filesystem::path>& packs, const std::string& suffix, IconType type
     );
 
-    static void loadIcon(const std::filesystem::path& path, std::vector<std::string>& list, std::vector<std::string>& duplicates, IconType type);
+    static void loadIcon(const std::filesystem::path& path, IconType type);
 
-    static void loadTrails(const std::vector<std::filesystem::path>& packs, std::vector<std::string>& duplicates);
+    static void loadTrails(const std::vector<std::filesystem::path>& pack);
 
-    static void loadTrail(const std::filesystem::path& path, std::vector<std::string>& duplicates);
+    static void loadTrail(const std::filesystem::path& path);
 
     static void saveTrails() {
         for (auto& [trail, info] : MoreIcons::TRAIL_INFO) {

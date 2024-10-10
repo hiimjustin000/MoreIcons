@@ -247,7 +247,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                     auto popup = ItemInfoPopup::create(1, unlockType);
                     if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0)) nameLabel->setString(name.c_str());
                     if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
-                    if (Loader::get()->isModLoaded("thesillydoggo.animatedprofiles")) {
+                    if (Loader::get()->isModLoaded("thesillydoggo.animatedprofiles") && (m_iconType == IconType::Robot || m_iconType == IconType::Spider)) {
                         for (auto buttonChild : CCArrayExt<CCNode*>(popup->m_buttonMenu->getChildren())) {
                             if (auto possibleButton = typeinfo_cast<CCMenuItemSpriteExtra*>(buttonChild)) {
                                 if (auto possibleIcon = typeinfo_cast<GJItemIcon*>(possibleButton->getNormalImage())) {

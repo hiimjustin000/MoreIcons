@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(MoreIcons VERSION 1.2.4)
+project(MoreIcons VERSION 1.2.5)
 
 add_library(${PROJECT_NAME} SHARED
     src/classes/DummyNode.cpp
@@ -18,6 +18,8 @@ add_library(${PROJECT_NAME} SHARED
     src/hooks/ProfilePage.cpp
     src/MoreIcons.cpp
 )
+
+target_include_directories(${PROJECT_NAME} PRIVATE include)
 
 if (NOT DEFINED ENV{GEODE_SDK})
     message(FATAL_ERROR "Unable to find Geode SDK! Please define GEODE_SDK environment variable to point to Geode")
