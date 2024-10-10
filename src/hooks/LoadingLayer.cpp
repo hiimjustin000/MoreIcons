@@ -8,10 +8,8 @@ class $modify(MILoadingLayer, LoadingLayer) {
         LoadingLayer::loadAssets();
 
         if (m_loadStep == 1) {
-            MoreIcons::LOADING_LAYER = this;
-            MoreIcons::load();
+            if (auto smallLabel2 = static_cast<CCLabelBMFont*>(getChildByID("geode-small-label-2"))) smallLabel2->setString("More Icons: Loading Icons");
         }
-
-        if (m_loadStep == 14) MoreIcons::LOADING_LAYER = nullptr;
+        else if (m_loadStep == 2) MoreIcons::load(this);
     }
 };

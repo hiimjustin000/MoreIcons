@@ -58,7 +58,8 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     void onSelect(CCObject* sender) {
         GJGarageLayer::onSelect(sender);
 
-        auto savedType = MoreIcons::savedForType(m_selectedIconType);
+        auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
+        auto savedType = MoreIcons::savedForType(sdi && sdi->getSavedValue("2pselected", false) ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType);
         if (!savedType.empty()) Mod::get()->setSavedValue<std::string>(savedType, "");
     }
 
@@ -250,9 +251,8 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                     if (Loader::get()->isModLoaded("thesillydoggo.animatedprofiles") && (m_iconType == IconType::Robot || m_iconType == IconType::Spider)) {
                         for (auto buttonChild : CCArrayExt<CCNode*>(popup->m_buttonMenu->getChildren())) {
                             if (auto possibleButton = typeinfo_cast<CCMenuItemSpriteExtra*>(buttonChild)) {
-                                if (auto possibleIcon = typeinfo_cast<GJItemIcon*>(possibleButton->getNormalImage())) {
+                                if (auto possibleIcon = typeinfo_cast<GJItemIcon*>(possibleButton->getNormalImage()))
                                     MoreIcons::changeSimplePlayer(possibleIcon->m_player, name, m_iconType);
-                                }
                             }
                         }
                     }

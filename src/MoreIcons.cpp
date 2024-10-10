@@ -90,6 +90,73 @@ std::vector<std::filesystem::path> MoreIcons::getTexturePacks() {
     return packs;
 }
 
+void MoreIcons::load(LoadingLayer* layer) {
+    auto packs = getTexturePacks();
+    { loadIcons(packs, "icon", IconType::Cube); }
+    { loadIcons(packs, "ship", IconType::Ship); }
+    { loadIcons(packs, "ball", IconType::Ball); }
+    { loadIcons(packs, "ufo", IconType::Ufo); }
+    { loadIcons(packs, "wave", IconType::Wave); }
+    { loadIcons(packs, "robot", IconType::Robot); }
+    { loadIcons(packs, "spider", IconType::Spider); }
+    { loadIcons(packs, "swing", IconType::Swing); }
+    { loadIcons(packs, "jetpack", IconType::Jetpack); }
+    { loadTrails(packs); }
+
+    sharedPool().wait();
+
+    {
+        std::lock_guard lock(IMAGE_MUTEX);
+        auto textureCache = cocos2d::CCTextureCache::get();
+        auto spriteFrameCache = cocos2d::CCSpriteFrameCache::get();
+        for (auto& image : IMAGES) {
+            auto texture = new cocos2d::CCTexture2D();
+            if (texture->initWithImage(image.image)) {
+                textureCache->m_pTextures->setObject(texture, image.texturePath);
+                if (!image.dict && !image.frameName.empty())
+                    spriteFrameCache->addSpriteFrame(
+                        cocos2d::CCSpriteFrame::createWithTexture(texture, { { 0, 0 }, texture->getContentSize() }),
+                        image.frameName.c_str()
+                    );
+                else if (image.dict) {
+                    _addSpriteFramesWithDictionary(image.dict, texture);
+                    CC_SAFE_RELEASE(image.dict);
+                }
+                if (image.index == 0) vectorForType(image.type).push_back(image.name);
+                if (image.type == IconType::Special) {
+                    TRAIL_INFO[image.name] = {
+                        .texture = image.texturePath,
+                        .blend = image.blend,
+                        .tint = image.tint
+                    };
+                }
+            }
+
+            texture->release();
+            CC_SAFE_RELEASE(image.image);
+        }
+
+        IMAGES.clear();
+        restoreSaved();
+        ALL.clear();
+        DUPLICATES.clear();
+        TRAIL_DUPLICATES.clear();
+        naturalSort(ICONS);
+        naturalSort(SHIPS);
+        naturalSort(BALLS);
+        naturalSort(UFOS);
+        naturalSort(WAVES);
+        naturalSort(ROBOTS);
+        naturalSort(SPIDERS);
+        naturalSort(SWINGS);
+        naturalSort(JETPACKS);
+        naturalSort(TRAILS);
+
+        if (auto smallLabel2 = static_cast<cocos2d::CCLabelBMFont*>(layer->getChildByID("geode-small-label-2")))
+            smallLabel2->setString("");
+    }
+}
+
 void MoreIcons::loadIcons(const std::vector<std::filesystem::path>& packs, const std::string& suffix, IconType type) {
     int i = 0;
     for (auto& packPath : packs) {
@@ -128,6 +195,7 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
         sharedPool().detach_task([path, textureQuality, name, type] {
             auto textureCache = CCTextureCache::get();
             auto spriteFrameCache = CCSpriteFrameCache::get();
+            int i = 0;
             for (auto& subEntry : naturalSort(path)) {
                 if (!subEntry.is_regular_file()) continue;
 
@@ -176,8 +244,11 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
                         .texturePath = pngPath,
                         .name = name,
                         .frameName = getFrameName(std::filesystem::path(noGraphicPngPath).filename().string(), name, type),
-                        .type = type
+                        .type = type,
+                        .index = i
                     });
+
+                    i++;
                 }
                 else image->release();
             }
@@ -249,7 +320,8 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
                     .texturePath = fullTexturePath,
                     .name = name,
                     .frameName = "",
-                    .type = type
+                    .type = type,
+                    .index = 0
                 });
             }
             else {
@@ -321,6 +393,7 @@ void MoreIcons::loadTrail(const std::filesystem::path& path) {
                 .name = name,
                 .frameName = "",
                 .type = IconType::Special,
+                .index = 0,
                 .blend = json.contains("blend") && json["blend"].is_bool() ? json["blend"].as_bool() : false,
                 .tint = json.contains("tint") && json["tint"].is_bool() ? json["tint"].as_bool() : false,
             });
@@ -395,6 +468,8 @@ void MoreIcons::changeSimplePlayer(SimplePlayer* player, const std::string& file
 }
 
 void MoreIcons::useCustomSprite(GJRobotSprite* robot, const std::string& file) {
+    robot->setBatchNode(nullptr);
+    robot->m_paSprite->setBatchNode(nullptr);
     auto spriteParts = robot->m_paSprite->m_spriteParts;
     auto spriteFrameCache = CCSpriteFrameCache::get();
     for (int i = 0; i < spriteParts->count(); i++) {

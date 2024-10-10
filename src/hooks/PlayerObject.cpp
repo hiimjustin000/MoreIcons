@@ -5,6 +5,10 @@ using namespace geode::prelude;
 
 #include <Geode/modify/PlayerObject.hpp>
 class $modify(MIPlayerObject, PlayerObject) {
+    static void onModify(auto& self) {
+        (void)self.setHookPriority("PlayerObject::setupStreak", -1);
+    }
+
     bool init(int player, int ship, GJBaseGameLayer* gameLayer, CCLayer* layer, bool highGraphics) {
         if (!PlayerObject::init(player, ship, gameLayer, layer, highGraphics)) return false;
 
@@ -204,7 +208,8 @@ class $modify(MIPlayerObject, PlayerObject) {
         else return;
 
         m_robotSprite->retain();
-        if (hasExisted) {
+        if (m_robotBatchNode) {
+            m_robotSprite->removeFromParent();
             m_robotBatchNode->removeFromParent();
             m_robotBatchNode->release();
         }
@@ -235,7 +240,8 @@ class $modify(MIPlayerObject, PlayerObject) {
         else return;
 
         m_spiderSprite->retain();
-        if (hasExisted) {
+        if (m_spiderBatchNode) {
+            m_spiderSprite->removeFromParent();
             m_spiderBatchNode->removeFromParent();
             m_spiderBatchNode->release();
         }
@@ -329,17 +335,7 @@ class $modify(MIPlayerObject, PlayerObject) {
         m_streakRelated1 = 14.0f;
         m_streakRelated2 = !trailInfo.tint;
         m_streakRelated3 = false;
-        if (m_regularTrail) m_regularTrail->removeFromParent();
-        m_regularTrail = CCMotionStreak::create(0.3f, 5.0f, 14.0f, { 255, 255, 255 }, CCTextureCache::get()->textureForKey(trailInfo.texture.c_str()));
+        m_regularTrail->initWithFade(0.3f, 5.0f, 14.0f, { 255, 255, 255 }, CCTextureCache::get()->textureForKey(trailInfo.texture.c_str()));
         if (trailInfo.blend) m_regularTrail->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
-        #if defined(GEODE_IS_ANDROID32)
-        *reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(m_regularTrail) + 0x168) = 50.0f;
-        #elif defined(GEODE_IS_ANDROID64)
-        *reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(m_regularTrail) + 0x1c8) = 50.0f;
-        #else
-        m_regularTrail->setM_fMaxSeg(50.0f);
-        #endif
-        m_parentLayer->addChild(m_regularTrail, -2);
-        m_regularTrail->stopStroke();
     }
 };

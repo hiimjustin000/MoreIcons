@@ -1,4 +1,10 @@
 # More Icons Changelog
+## v1.2.6 (2024-10-10)
+- Fixed robots and spiders sometimes crashing the game
+- Fixed icons with individual images being added multiple times
+- Fixed dual icons not being deselected properly
+- Added loading text while loading the game
+
 ## v1.2.5 (2024-10-10)
 - Utilized multiple CPU cores for loading icons, reducing load times
 - Fixed non-robots and non-spiders not changing in icon popups

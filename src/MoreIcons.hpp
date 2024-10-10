@@ -13,6 +13,7 @@ struct ImageData {
     std::string name;
     std::string frameName;
     IconType type;
+    int index;
     bool blend;
     bool tint;
 };
@@ -51,7 +52,6 @@ public:
     static inline std::unordered_map<std::string, TrailInfo> TRAIL_INFO;
     static inline std::vector<std::string> DUPLICATES;
     static inline std::vector<std::string> TRAIL_DUPLICATES;
-    static inline LoadingLayer* LOADING_LAYER = nullptr;
     static inline std::vector<ImageData> IMAGES;
     static inline std::mutex IMAGE_MUTEX;
     static inline IconType LOAD_TYPE = IconType::Cube;
@@ -143,69 +143,7 @@ public:
         geode::Mod::get()->setSavedValue("trails", TRAILS);
     }
 
-    static void load() {
-        auto packs = getTexturePacks();
-        { loadIcons(packs, "icon", IconType::Cube); }
-        { loadIcons(packs, "ship", IconType::Ship); }
-        { loadIcons(packs, "ball", IconType::Ball); }
-        { loadIcons(packs, "ufo", IconType::Ufo); }
-        { loadIcons(packs, "wave", IconType::Wave); }
-        { loadIcons(packs, "robot", IconType::Robot); }
-        { loadIcons(packs, "spider", IconType::Spider); }
-        { loadIcons(packs, "swing", IconType::Swing); }
-        { loadIcons(packs, "jetpack", IconType::Jetpack); }
-        { loadTrails(packs); }
-
-        sharedPool().wait();
-
-        {
-            std::lock_guard lock(IMAGE_MUTEX);
-            auto textureCache = cocos2d::CCTextureCache::get();
-            auto spriteFrameCache = cocos2d::CCSpriteFrameCache::get();
-            for (auto& image : IMAGES) {
-                auto texture = new cocos2d::CCTexture2D();
-                if (texture->initWithImage(image.image)) {
-                    textureCache->m_pTextures->setObject(texture, image.texturePath);
-                    if (!image.dict && !image.frameName.empty())
-                        spriteFrameCache->addSpriteFrame(
-                            cocos2d::CCSpriteFrame::createWithTexture(texture, { { 0, 0 }, texture->getContentSize() }),
-                            image.frameName.c_str()
-                        );
-                    else if (image.dict) {
-                        _addSpriteFramesWithDictionary(image.dict, texture);
-                        CC_SAFE_RELEASE(image.dict);
-                    }
-                    vectorForType(image.type).push_back(image.name);
-                    if (image.type == IconType::Special) {
-                        TRAIL_INFO[image.name] = {
-                            .texture = image.texturePath,
-                            .blend = image.blend,
-                            .tint = image.tint
-                        };
-                    }
-                }
-
-                texture->release();
-                CC_SAFE_RELEASE(image.image);
-            }
-
-            IMAGES.clear();
-            restoreSaved();
-            ALL.clear();
-            DUPLICATES.clear();
-            TRAIL_DUPLICATES.clear();
-            naturalSort(ICONS);
-            naturalSort(SHIPS);
-            naturalSort(BALLS);
-            naturalSort(UFOS);
-            naturalSort(WAVES);
-            naturalSort(ROBOTS);
-            naturalSort(SPIDERS);
-            naturalSort(SWINGS);
-            naturalSort(JETPACKS);
-            naturalSort(TRAILS);
-        }
-    }
+    static void load(LoadingLayer*);
 
     static std::vector<std::filesystem::directory_entry> naturalSort(const std::filesystem::path& path);
 
@@ -350,13 +288,11 @@ public:
 
     static void useCustomRobot(GJRobotSprite* robot, const std::string& robotFile) {
         if (!robot || robotFile.empty() || !MoreIcons::hasRobot(robotFile)) return;
-        robot->setBatchNode(nullptr);
         useCustomSprite(robot, robotFile);
     }
 
     static void useCustomSpider(GJSpiderSprite* spider, const std::string& spiderFile) {
         if (!spider || spiderFile.empty() || !MoreIcons::hasSpider(spiderFile)) return;
-        spider->setBatchNode(nullptr);
         useCustomSprite(spider, spiderFile);
     }
 
