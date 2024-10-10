@@ -156,6 +156,8 @@ public:
         { loadIcons(packs, "jetpack", IconType::Jetpack); }
         { loadTrails(packs); }
 
+        sharedPool().wait();
+
         {
             std::lock_guard lock(IMAGE_MUTEX);
             auto textureCache = cocos2d::CCTextureCache::get();
