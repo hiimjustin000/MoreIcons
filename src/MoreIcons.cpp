@@ -204,37 +204,43 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
 
                 auto pathFilename = subEntryPath.filename().string();
                 auto fileQuality = kTextureQualityLow;
-                if (pathFilename.find("-uhd.png") != std::string::npos) {
-                    auto hdExists = std::filesystem::exists(string::replace(subEntryPath.string(), "-uhd.png", "-hd.png"));
-                    if (hdExists || textureQuality != kTextureQualityHigh) {
-                        if (!hdExists) log::warn("Ignoring too high quality PNG file: {}", path.filename() / pathFilename);
+                if (pathFilename.ends_with("-uhd.png")) {
+                    if (textureQuality != kTextureQualityHigh) {
+                        log::warn("Ignoring too high quality PNG file: {}", subEntryPath.parent_path().filename() / pathFilename);
                         continue;
                     }
-                    else fileQuality = kTextureQualityHigh;
+
+                    fileQuality = kTextureQualityHigh;
                 }
-                else if (pathFilename.find("-hd.png") != std::string::npos) {
-                    auto sdExists = std::filesystem::exists(string::replace(subEntryPath.string(), "-hd.png", ".png"));
-                    if (sdExists || (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium)) {
-                        if (!sdExists) log::warn("Ignoring too high quality PNG file: {}", path.filename() / pathFilename);
+                else if (pathFilename.ends_with("-hd.png")) {
+                    if (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium) {
+                        log::warn("Ignoring too high quality PNG file: {}", subEntryPath.parent_path().filename() / pathFilename);
                         continue;
                     }
+
+                    if (
+                        std::filesystem::exists(replaceEnd(subEntryPath.string(), "-hd.png", "-uhd.png")) &&
+                        textureQuality == kTextureQualityHigh
+                    ) continue;
                     else fileQuality = kTextureQualityMedium;
+                }
+                else {
+                    if (
+                        std::filesystem::exists(replaceEnd(subEntryPath.string(), ".png", "-uhd.png")) &&
+                        textureQuality == kTextureQualityHigh
+                    ) continue;
+                    else if (
+                        std::filesystem::exists(replaceEnd(subEntryPath.string(), ".png", "-hd.png")) &&
+                        (textureQuality == kTextureQualityMedium || textureQuality == kTextureQualityHigh)
+                    ) continue;
+                    else fileQuality = kTextureQualityLow;
                 }
 
                 auto pngPath = subEntryPath.string();
-                auto noGraphicPngPath = string::replace(string::replace(pngPath, "-uhd.png", ".png"), "-hd.png", ".png");
-                auto possibleUHD = string::replace(noGraphicPngPath, ".png", "-uhd.png");
-                auto possibleHD = string::replace(noGraphicPngPath, ".png", "-hd.png");
-                auto usedTextureQuality = kTextureQualityLow;
-                if (textureQuality == kTextureQualityHigh && (fileQuality == kTextureQualityHigh || std::filesystem::exists(possibleUHD))) {
-                    pngPath = possibleUHD;
-                    usedTextureQuality = kTextureQualityHigh;
-                }
-                else if (textureQuality == kTextureQualityMedium && (fileQuality == kTextureQualityMedium || std::filesystem::exists(possibleHD))) {
-                    pngPath = possibleHD;
-                    usedTextureQuality = kTextureQualityMedium;
-                }
-
+                std::string noGraphicPngPath;
+                if (fileQuality == kTextureQualityHigh) noGraphicPngPath = replaceEnd(pngPath, "-uhd.png", ".png");
+                else if (fileQuality == kTextureQualityMedium) noGraphicPngPath = replaceEnd(pngPath, "-hd.png", ".png");
+                else noGraphicPngPath = pngPath;
                 auto image = new CCImage();
                 if (image->initWithImageFileThreadSafe(pngPath.c_str())) {
                     std::lock_guard lock(IMAGE_MUTEX);
@@ -257,47 +263,53 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
     else if (std::filesystem::is_regular_file(path)) {
         if (path.extension() != ".plist") return;
 
-        auto name = string::replace(string::replace(path.filename().string(), "-uhd.plist", ""), "-hd.plist", "");
+        auto pathFilename = path.filename().string();
+        auto fileQuality = kTextureQualityLow;
+        if (pathFilename.ends_with("-uhd.plist")) {
+            if (textureQuality != kTextureQualityHigh) {
+                log::warn("Ignoring too high quality plist file: {}", pathFilename);
+                return;
+            }
+
+            fileQuality = kTextureQualityHigh;
+        }
+        else if (pathFilename.ends_with("-hd.plist")) {
+            if (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium) {
+                log::warn("Ignoring too high quality plist file: {}", pathFilename);
+                return;
+            }
+
+            if (
+                std::filesystem::exists(replaceEnd(path.string(), "-hd.plist", "-uhd.plist")) &&
+                textureQuality == kTextureQualityHigh
+            ) return;
+            else fileQuality = kTextureQualityMedium;
+        }
+        else {
+            if (
+                std::filesystem::exists(replaceEnd(path.string(), ".plist", "-uhd.plist")) &&
+                textureQuality == kTextureQualityHigh
+            ) return;
+            else if (
+                std::filesystem::exists(replaceEnd(path.string(), ".plist", "-hd.plist")) &&
+                (textureQuality == kTextureQualityMedium || textureQuality == kTextureQualityHigh)
+            ) return;
+            else fileQuality = kTextureQualityLow;
+        }
+
+        auto plistPath = path.string();
+        std::string noGraphicPlistPath;
+        if (fileQuality == kTextureQualityHigh) noGraphicPlistPath = replaceEnd(plistPath, "-uhd.plist", ".plist");
+        else if (fileQuality == kTextureQualityMedium) noGraphicPlistPath = replaceEnd(plistPath, "-hd.plist", ".plist");
+        else noGraphicPlistPath = plistPath;
+        auto name = std::filesystem::path(noGraphicPlistPath).stem().string();
         if (std::find(ALL.begin(), ALL.end(), name) != ALL.end()) {
             DUPLICATES.push_back(name);
             name += fmt::format("_{:02}", std::count(DUPLICATES.begin(), DUPLICATES.end(), name));
         }
         ALL.push_back(name);
 
-        sharedPool().detach_task([path, textureQuality, name, type] {
-            auto pathFilename = path.filename().string();
-            auto fileQuality = kTextureQualityLow;
-            if (pathFilename.find("-uhd.plist") != std::string::npos) {
-                auto hdExists = std::filesystem::exists(string::replace(path.string(), "-uhd.plist", "-hd.plist"));
-                if (hdExists || textureQuality != kTextureQualityHigh) {
-                    if (!hdExists) log::warn("Ignoring too high quality plist file: {}", pathFilename);
-                    return;
-                }
-                else fileQuality = kTextureQualityHigh;
-            }
-            else if (pathFilename.find("-hd.plist") != std::string::npos) {
-                auto sdExists = std::filesystem::exists(string::replace(path.string(), "-hd.plist", ".plist"));
-                if (sdExists || (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium)) {
-                    if (!sdExists) log::warn("Ignoring too high quality plist file: {}", pathFilename);
-                    return;
-                }
-                else fileQuality = kTextureQualityMedium;
-            }
-
-            auto plistPath = path.string();
-            auto noGraphicPlistPath = string::replace(string::replace(plistPath, "-uhd.plist", ".plist"), "-hd.plist", ".plist");
-            auto possibleUHD = string::replace(noGraphicPlistPath, ".plist", "-uhd.plist");
-            auto possibleHD = string::replace(noGraphicPlistPath, ".plist", "-hd.plist");
-            auto usedTextureQuality = kTextureQualityLow;
-            if (textureQuality == kTextureQualityHigh && (fileQuality == kTextureQualityHigh || std::filesystem::exists(possibleUHD))) {
-                plistPath = possibleUHD;
-                usedTextureQuality = kTextureQualityHigh;
-            }
-            else if (textureQuality == kTextureQualityMedium && (fileQuality == kTextureQualityMedium || std::filesystem::exists(possibleHD))) {
-                plistPath = possibleHD;
-                usedTextureQuality = kTextureQualityMedium;
-            }
-
+        sharedPool().detach_task([path, textureQuality, name, plistPath, type] {
             auto dict = CCDictionary::createWithContentsOfFileThreadSafe(plistPath.c_str());
             auto frames = new CCDictionary();
             for (auto [frameName, frame] : CCDictionaryExt<std::string, CCDictionary*>(static_cast<CCDictionary*>(dict->objectForKey("frames")))) {

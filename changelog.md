@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.2.7 (2024-10-10)
+- Fixed plist icons changing names
+
 ## v1.2.6 (2024-10-10)
 - Fixed robots and spiders sometimes crashing the game
 - Fixed icons with individual images being added multiple times
