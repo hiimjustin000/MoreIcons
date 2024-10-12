@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.3.1 (2024-10-12)
+- Fixed a bug where the game would crash when pressing the More Icons button in the icon kit
+
 ## v1.3.0 (2024-10-12)
 - Added ability to view logs and amount of loaded icons in the icon kit
 - Changed logs to be more specific

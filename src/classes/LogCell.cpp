@@ -60,7 +60,7 @@ bool LogCell::init(LogData const& data, int index, int total, bool dark) {
     addChild(infoIcon);
 
     auto textArea = TextArea::create(data.message, "bigFont.fnt", 0.25f, 350.0f, { 0.0f, 1.0f }, 10.0f, true);
-    textArea->setContentSize({ textArea->m_width, textArea->m_height * textArea->m_label->m_lines->count() });
+    textArea->setContentSize({ textArea->m_width, textArea->m_height * (textArea->m_label->m_lines ? textArea->m_label->m_lines->count() : 0) });
     textArea->m_label->setPosition({ 0.0f, textArea->getContentHeight() });
     textArea->setPosition({ 40.0f, 35.0f });
     textArea->setAnchorPoint({ 0.0f, 0.5f });
