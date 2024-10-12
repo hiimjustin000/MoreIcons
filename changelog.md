@@ -1,4 +1,9 @@
 # More Icons Changelog
+## v1.3.0 (2024-10-12)
+- Added ability to view logs and amount of loaded icons in the icon kit
+- Changed logs to be more specific
+- Updated tutorial links in the mod's description
+
 ## v1.2.7 (2024-10-10)
 - Fixed plist icons changing names
 

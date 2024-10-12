@@ -206,7 +206,13 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
                 auto fileQuality = kTextureQualityLow;
                 if (pathFilename.ends_with("-uhd.png")) {
                     if (textureQuality != kTextureQualityHigh) {
-                        log::warn("Ignoring too high quality PNG file: {}", subEntryPath.parent_path().filename() / pathFilename);
+                        auto logMessage = fmt::format("{}: Ignoring high-quality PNG file for {} texture quality", subEntryPath.string(),
+                            textureQuality == kTextureQualityMedium ? "medium" : "low");
+                        log::warn("{}", logMessage);
+                        {
+                            std::lock_guard lock(LOG_MUTEX);
+                            LOGS.push_back({ .message = logMessage, .type = LogType::Info });
+                        }
                         continue;
                     }
 
@@ -214,7 +220,12 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
                 }
                 else if (pathFilename.ends_with("-hd.png")) {
                     if (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium) {
-                        log::warn("Ignoring too high quality PNG file: {}", subEntryPath.parent_path().filename() / pathFilename);
+                        auto logMessage = fmt::format("{}: Ignoring medium-quality PNG file for low texture quality", subEntryPath.string());
+                        log::warn("{}", logMessage);
+                        {
+                            std::lock_guard lock(LOG_MUTEX);
+                            LOGS.push_back({ .message = logMessage, .type = LogType::Info });
+                        }
                         continue;
                     }
 
@@ -267,7 +278,13 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
         auto fileQuality = kTextureQualityLow;
         if (pathFilename.ends_with("-uhd.plist")) {
             if (textureQuality != kTextureQualityHigh) {
-                log::warn("Ignoring too high quality plist file: {}", pathFilename);
+                auto logMessage = fmt::format("{}: Ignoring high-quality PLIST file for {} texture quality", path.string(),
+                    textureQuality == kTextureQualityMedium ? "medium" : "low");
+                log::warn("{}", logMessage);
+                {
+                    std::lock_guard lock(LOG_MUTEX);
+                    LOGS.push_back({ .message = logMessage, .type = LogType::Info });
+                }
                 return;
             }
 
@@ -275,7 +292,12 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
         }
         else if (pathFilename.ends_with("-hd.plist")) {
             if (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium) {
-                log::warn("Ignoring too high quality plist file: {}", pathFilename);
+                auto logMessage = fmt::format("{}: Ignoring medium-quality PLIST file for low texture quality", path.string());
+                log::warn("{}", logMessage);
+                {
+                    std::lock_guard lock(LOG_MUTEX);
+                    LOGS.push_back({ .message = logMessage, .type = LogType::Info });
+                }
                 return;
             }
 
@@ -317,9 +339,16 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
             }
             dict->setObject(frames, "frames");
             auto metadata = static_cast<CCDictionary*>(dict->objectForKey("metadata"));
-            auto fullTexturePath = (path.parent_path() / std::filesystem::path(metadata->valueForKey("textureFileName")->getCString()).filename()).string();
+            auto texturePath = std::filesystem::path(metadata->valueForKey("textureFileName")->getCString()).filename().string();
+            auto fullTexturePath = (path.parent_path() / texturePath).string();
             if (!std::filesystem::exists(fullTexturePath)) {
-                log::warn("Texture file not found: {}", fullTexturePath);
+                auto logMessage = fmt::format("{}: Texture file {} not found", path.string(), texturePath); 
+                log::warn("{}", logMessage);
+                {
+                    std::lock_guard lock(LOG_MUTEX);
+                    LOGS.push_back({ .message = logMessage, .type = LogType::Error });
+                    if (HIGHEST_SEVERITY < LogType::Error) HIGHEST_SEVERITY = LogType::Error;
+                }
                 return;
             }
 
@@ -388,7 +417,13 @@ void MoreIcons::loadTrail(const std::filesystem::path& path) {
             std::string error;
             auto tryJson = matjson::parse(bufferStream.str(), error);
             if (!error.empty()) {
-                log::warn("Failed to parse JSON file {}: {}", jsonPath.filename().string(), error);
+                auto logMessage = fmt::format("{}: Failed to parse JSON file ({})", path.string(), error);
+                log::warn("{}", logMessage);
+                {
+                    std::lock_guard lock(LOG_MUTEX);
+                    LOGS.push_back({ .message = logMessage, .type = LogType::Warn });
+                    if (HIGHEST_SEVERITY < LogType::Warn) HIGHEST_SEVERITY = LogType::Warn;
+                }
                 json = matjson::Object { { "blend", false }, { "tint", false } };
             }
             else json = tryJson.value_or(matjson::Object { { "blend", false }, { "tint", false } });

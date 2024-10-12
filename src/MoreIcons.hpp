@@ -18,6 +18,17 @@ struct ImageData {
     bool tint;
 };
 
+enum class LogType {
+    Info,
+    Warn,
+    Error
+};
+
+struct LogData {
+    std::string message;
+    LogType type;
+};
+
 // https://github.com/GlobedGD/globed2/blob/v1.6.2/src/util/cocos.cpp#L44
 namespace {
     template <typename TC>
@@ -34,7 +45,6 @@ namespace {
 
     void _addSpriteFramesWithDictionary(cocos2d::CCDictionary*, cocos2d::CCTexture2D*);
 }
-
 
 class MoreIcons {
 public:
@@ -54,7 +64,9 @@ public:
     static inline std::vector<std::string> TRAIL_DUPLICATES;
     static inline std::vector<ImageData> IMAGES;
     static inline std::mutex IMAGE_MUTEX;
-    static inline IconType LOAD_TYPE = IconType::Cube;
+    static inline std::vector<LogData> LOGS;
+    static inline std::mutex LOG_MUTEX;
+    static inline LogType HIGHEST_SEVERITY = LogType::Info;
 
     static bool hasIcon(const std::string& name) {
         return !ICONS.empty() && std::find(ICONS.begin(), ICONS.end(), name) != ICONS.end();
@@ -115,6 +127,8 @@ public:
         saveTrails();
         TRAIL_INFO.clear();
         removeSaved();
+        LOGS.clear();
+        HIGHEST_SEVERITY = LogType::Info;
     }
 
     static void removeSaved() {

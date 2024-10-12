@@ -1,7 +1,9 @@
 # More Icons
 A mod that loads custom icons.
 
-[YouTube Tutorial](https://youtu.be/s2AM98Yj59k)
+[Windows Tutorial](https://youtu.be/Dn0S3DPuq08)\
+[Android Tutorial](https://youtu.be/GJKoLUnkyBk)\
+[macOS Tutorial](https://youtu.be/1sI4WJE0yqE)
 
 ## Adding Icons
 To add a custom icon, you need an icon spritesheet (.plist) and an icon atlas (.png). Tools like [GDBrowser's Icon Kit](https://gdbrowser.com/iconkit) can be used to create these spritesheets and atlases, with the "Developer Mode" option enabled in the settings.
@@ -31,10 +33,11 @@ The spritesheets and atlases should be placed in `(Geometry Dash folder)/geode/c
 - spider
 - swing
 - jetpack
+- trail
 
 This can also be done with individual images per icon piece, with the same naming conventions as above. The sprites should be placed in `(Geometry Dash folder)/geode/config/hiimjustin000.more_icons/(gamemode)/(icon name)`, where `(icon name)` is the name of the icon.
 
-If anything goes wrong, the mod will log warnings and errors to the console, which can be checked in `(Geometry Dash folder)/geode/logs`.
+If anything goes wrong, the mod will log warnings and errors to the console, which can be checked in the icon kit with a button on the left side of the screen.
 
 ## Texture Packs
 For adding icons to texture packs, the process is similar to adding icons to the mod. However, you will need the mod "Texture Loader" by Geode Team installed to use these texture packs.
