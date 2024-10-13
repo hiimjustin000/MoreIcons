@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.3.2 (2024-10-13)
+- Changed the More Icons button in the icon kit to only show the info when there are no logs
+
 ## v1.3.1 (2024-10-12)
 - Fixed a bug where the game would crash when pressing the More Icons button in the icon kit
 

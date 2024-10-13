@@ -66,7 +66,10 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             severitySprite->setScale(0.6f);
             moreIconsSprite->addChild(severitySprite, 1);
         }
-        auto moreIconsButton = CCMenuItemExt::createSpriteExtra(moreIconsSprite, [this](auto) { LogLayer::create()->show(); });
+        auto moreIconsButton = CCMenuItemExt::createSpriteExtra(moreIconsSprite, [this](auto) {
+            if (!MoreIcons::LOGS.empty()) LogLayer::create()->show();
+            else MoreIcons::showInfoPopup(true);
+        });
         moreIconsButton->setID("more-icons-button"_spr);
         if (auto shardsMenu = getChildByID("shards-menu")) {
             shardsMenu->addChild(moreIconsButton);

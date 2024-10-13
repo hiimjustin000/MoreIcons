@@ -55,32 +55,7 @@ bool LogLayer::setup() {
     m_mainLayer->addChild(topButtons);
 
     topButtons->addChild(CCMenuItemExt::createSpriteExtraWithFrameName("GJ_infoIcon_001.png", 1.0f, [this](auto) {
-        FLAlertLayer::create(
-            "More Icons",
-            fmt::format(
-                "<cg>Icons</c>: {}\n"
-                "<cp>Ships</c>: {}\n"
-                "<cr>Balls</c>: {}\n"
-                "<co>UFOs</c>: {}\n"
-                "<cj>Waves</c>: {}\n"
-                "Robots: {}\n"
-                "<ca>Spiders</c>: {}\n"
-                "<cy>Swings</c>: {}\n"
-                "<cd>Jetpacks</c>: {}\n"
-                "<cb>Trails</c>: {}",
-                MoreIcons::ICONS.size(),
-                MoreIcons::SHIPS.size(),
-                MoreIcons::BALLS.size(),
-                MoreIcons::UFOS.size(),
-                MoreIcons::WAVES.size(),
-                MoreIcons::ROBOTS.size(),
-                MoreIcons::SPIDERS.size(),
-                MoreIcons::SWINGS.size(),
-                MoreIcons::JETPACKS.size(),
-                MoreIcons::TRAILS.size()
-            ),
-            "OK"
-        )->show();
+        MoreIcons::showInfoPopup();
     }));
     topButtons->addChild(CCMenuItemExt::createSpriteExtraWithFrameName("folderIcon_001.png", 0.7f, [this](auto) {
         file::openFolder(Mod::get()->getConfigDir());

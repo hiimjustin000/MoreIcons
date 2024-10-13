@@ -181,7 +181,7 @@ public:
     static void loadTrail(const std::filesystem::path& path);
 
     static void saveTrails() {
-        for (auto& [trail, info] : MoreIcons::TRAIL_INFO) {
+        for (auto& [trail, info] : TRAIL_INFO) {
             std::fstream file(std::filesystem::path(info.texture).replace_extension(".json"), std::ios::out);
             file << matjson::Value(matjson::Object{
                 { "blend", info.blend },
@@ -306,14 +306,48 @@ public:
     }
 
     static void useCustomRobot(GJRobotSprite* robot, const std::string& robotFile) {
-        if (!robot || robotFile.empty() || !MoreIcons::hasRobot(robotFile)) return;
+        if (!robot || robotFile.empty() || !hasRobot(robotFile)) return;
         useCustomSprite(robot, robotFile);
     }
 
     static void useCustomSpider(GJSpiderSprite* spider, const std::string& spiderFile) {
-        if (!spider || spiderFile.empty() || !MoreIcons::hasSpider(spiderFile)) return;
+        if (!spider || spiderFile.empty() || !hasSpider(spiderFile)) return;
         useCustomSprite(spider, spiderFile);
     }
 
     static void useCustomSprite(GJRobotSprite* robot, const std::string& file);
+
+    static void showInfoPopup(bool folderButton = false) {
+        geode::createQuickPopup(
+            "More Icons",
+            fmt::format(
+                "<cg>Icons</c>: {}\n"
+                "<cp>Ships</c>: {}\n"
+                "<cr>Balls</c>: {}\n"
+                "<co>UFOs</c>: {}\n"
+                "<cj>Waves</c>: {}\n"
+                "Robots: {}\n"
+                "<ca>Spiders</c>: {}\n"
+                "<cy>Swings</c>: {}\n"
+                "<cd>Jetpacks</c>: {}\n"
+                "<cb>Trails</c>: {}",
+                ICONS.size(),
+                SHIPS.size(),
+                BALLS.size(),
+                UFOS.size(),
+                WAVES.size(),
+                ROBOTS.size(),
+                SPIDERS.size(),
+                SWINGS.size(),
+                JETPACKS.size(),
+                TRAILS.size()
+            ),
+            "OK",
+            folderButton ? "Folder" : nullptr,
+            300.0f,
+            [folderButton](auto, bool btn2) {
+                if (folderButton && btn2) geode::utils::file::openFolder(geode::Mod::get()->getConfigDir());
+            }
+        );
+    }
 };
