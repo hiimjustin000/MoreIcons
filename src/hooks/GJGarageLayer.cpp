@@ -9,8 +9,6 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         ListButtonBar* m_pageBar;
         CCMenu* m_navMenu;
         std::map<IconType, int> m_pages;
-        int m_page;
-        bool m_custom;
         CCObject* m_originalSDISwitchTarget;
         SEL_MenuHandler m_originalSDISwitch;
         CCObject* m_originalSDISwapTarget;
@@ -24,6 +22,9 @@ class $modify(MIGarageLayer, GJGarageLayer) {
 
     bool init() {
         if (!GJGarageLayer::init()) return false;
+
+        auto f = m_fields.self();
+        f->m_pages[IconType::Cube] = m_iconPages[IconType::Cube];
 
         auto iconType = GameManager::get()->m_playerIconType;
         MoreIcons::changeSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(iconType, false), ""), iconType);
@@ -39,7 +40,6 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         else createNavMenu();
 
         if (sdi) {
-            auto f = m_fields.self();
             auto p1Button = static_cast<CCMenuItemSpriteExtra*>(getChildByID("player-buttons-menu")->getChildByID("player1-button"));
             auto p2Button = static_cast<CCMenuItemSpriteExtra*>(getChildByID("player-buttons-menu")->getChildByID("player2-button"));
             f->m_originalSDISwitchTarget = p1Button->m_pListener;
@@ -90,8 +90,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     void newOn2PToggle(CCObject* sender) {
         auto f = m_fields.self();
         (f->m_originalSDISwitchTarget->*f->m_originalSDISwitch)(sender);
-        if (f->m_custom) setupCustomPage(f->m_page);
-        else createNavMenu();
+        setupCustomPage(f->m_pages[m_iconType]);
     }
 
     void newSwap2PKit(CCObject* sender) {
@@ -112,14 +111,13 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         auto lastmode = (IconType)Loader::get()->getLoadedMod("weebify.separate_dual_icons")->getSavedValue("lastmode", 0);
         MoreIcons::changeSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
             Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(lastmode, true), ""), lastmode);
-        if (f->m_custom) setupCustomPage(f->m_page);
-        else createNavMenu();
+        setupCustomPage(f->m_pages[m_iconType]);
     }
 
     void updatePlayerColors() {
         GJGarageLayer::updatePlayerColors();
 
-        if (m_iconSelection && m_fields->m_custom && !MoreIcons::vectorForType(m_iconType).empty()) m_iconSelection->setVisible(false);
+        if (m_iconSelection && m_fields->m_pageBar && !MoreIcons::vectorForType(m_iconType).empty()) m_iconSelection->setVisible(false);
     }
 
     void createNavMenu() {
@@ -136,16 +134,21 @@ class $modify(MIGarageLayer, GJGarageLayer) {
 
         auto& vec = MoreIcons::vectorForType(m_iconType);
         m_navDotMenu->setPositionY(vec.empty() ? 25.0f : 35.0f);
-        if (GameManager::get()->countForType(m_iconType) <= 36) {
+        auto count = (GameManager::get()->countForType(m_iconType) + 35) / 36;
+        if (count < 2) {
             m_navDotMenu->setVisible(true);
             m_navDotMenu->setEnabled(true);
             m_navDotMenu->removeAllChildren();
             auto firstDot = static_cast<CCMenuItemSpriteExtra*>(m_pageButtons->objectAtIndex(0));
             static_cast<CCSprite*>(firstDot->getNormalImage())->setDisplayFrame(CCSpriteFrameCache::get()->spriteFrameByName(
-                f->m_custom && !vec.empty() ? "gj_navDotBtn_off_001.png" : "gj_navDotBtn_on_001.png"
+                f->m_pageBar && !vec.empty() ? "gj_navDotBtn_off_001.png" : "gj_navDotBtn_on_001.png"
             ));
             m_navDotMenu->addChild(firstDot);
             m_navDotMenu->updateLayout();
+            m_leftArrow->setVisible(true);
+            m_leftArrow->setEnabled(true);
+            m_rightArrow->setVisible(true);
+            m_rightArrow->setEnabled(true);
         }
         f->m_navMenu->setVisible(!vec.empty());
         if (vec.empty()) return;
@@ -153,10 +156,12 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         f->m_navMenu->removeAllChildren();
         auto navDotAmount = (vec.size() + 35) / 36;
         for (int i = 0; i < navDotAmount; i++) {
+            auto page = count + i;
+            auto pages = f->m_pages;
             auto dot = CCMenuItemExt::createSpriteExtraWithFrameName(
-                f->m_custom && i == f->m_page ? "gj_navDotBtn_on_001.png" : "gj_navDotBtn_off_001.png",
+                pages.contains(m_iconType) && page == pages[m_iconType] ? "gj_navDotBtn_on_001.png" : "gj_navDotBtn_off_001.png",
                 0.9f,
-                [this, i](auto) { setupCustomPage(i); }
+                [this, page](auto) { setupCustomPage(page); }
             );
             dot->setSizeMult(1.1f);
             f->m_navMenu->addChild(dot);
@@ -178,7 +183,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     void onNavigate(CCObject* sender) {
         GJGarageLayer::onNavigate(sender);
 
-        m_fields->m_custom = false;
+        m_fields->m_pages[m_iconType] = sender->getTag();
 
         createNavMenu();
     }
@@ -186,17 +191,51 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     void onArrow(CCObject* sender) {
         GJGarageLayer::onArrow(sender);
 
+        auto maxPage = std::max((GameManager::get()->countForType(m_iconType) - 1) / 36, 0);
+        auto tag = sender->getTag();
+        m_iconPages[m_iconType] -= tag;
+        auto vanillaPage = m_iconPages[m_iconType];
+        if (vanillaPage < 0) m_iconPages[m_iconType] = maxPage;
+        else if (vanillaPage > maxPage) m_iconPages[m_iconType] = 0;
+        vanillaPage = m_iconPages[m_iconType];
+
         auto f = m_fields.self();
-        if (f->m_custom) setupCustomPage(f->m_page + sender->getTag());
-        else createNavMenu();
+        f->m_pages[m_iconType] = MoreIcons::wrapPage(m_iconType, f->m_pages[m_iconType] + tag);
+        auto page = f->m_pages[m_iconType];
+        
+        auto& vec = MoreIcons::vectorForType(m_iconType);
+        switch (tag) {
+            case -1: {
+                if (MoreIcons::isNormalPage(page, m_iconType)) {
+                    m_iconPages[m_iconType] = page;
+                    if (vanillaPage < 0) m_iconPages[m_iconType] = maxPage;
+                    createNavMenu();
+                    return;
+                }
+                else setupCustomPage(page);
+            }
+            case 1: {
+                if (MoreIcons::isNormalPage(page, m_iconType)) {
+                    m_iconPages[m_iconType] = page;
+                    if (vanillaPage > maxPage) m_iconPages[m_iconType] = 0;
+                    createNavMenu();
+                    return;
+                }
+                else setupCustomPage(page);
+            }
+        }
     }
 
     void onSelectTab(CCObject* sender) {
         GJGarageLayer::onSelectTab(sender);
 
+        auto savedType = MoreIcons::savedForType(m_iconType);
+        auto savedValue = savedType.empty() ? "" : Mod::get()->getSavedValue<std::string>(savedType, "");
+
         auto f = m_fields.self();
-        if (f->m_custom) setupCustomPage(f->m_pages.contains(m_iconType) ? f->m_pages[m_iconType] : MoreIcons::findIconPage(m_iconType));
-        else createNavMenu();
+        auto page = f->m_pages.contains(m_iconType) ? f->m_pages[m_iconType] : MoreIcons::findIconPage(m_iconType);
+        f->m_pages[m_iconType] = page;
+        setupCustomPage(page);
     }
 
     void setupCustomPage(int page) {
@@ -211,16 +250,14 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             f->m_pageBar->removeFromParent();
             f->m_pageBar = nullptr;
         }
-        if (vec.empty()) {
+        if (vec.empty() || MoreIcons::isNormalPage(page, m_iconType)) {
             createNavMenu();
             return;
         }
 
         m_iconSelection->setVisible(false);
 
-        f->m_custom = true;
-        f->m_page = MoreIcons::wrapPage(m_iconType, page);
-        f->m_pages[m_iconType] = f->m_page;
+        f->m_pages[m_iconType] = MoreIcons::wrapPage(m_iconType, page);
         createNavMenu();
 
         auto iconType = GameManager::get()->m_playerIconType;
@@ -231,9 +268,6 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             MoreIcons::changeSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
                 Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(lastmode, true), ""), lastmode);
         }
-
-        m_leftArrow->setVisible(vec.size() > 36);
-        m_rightArrow->setVisible(vec.size() > 36);
 
         auto spriteFrameCache = CCSpriteFrameCache::get();
         for (auto navDot : CCArrayExt<CCMenuItemSpriteExtra*>(m_navDotMenu->getChildren())) {
@@ -250,7 +284,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         auto dual = sdi && sdi->getSavedValue("2pselected", false);
         int i = 1;
         auto hasAnimProf = Loader::get()->isModLoaded("thesillydoggo.animatedprofiles");
-        for (auto name : MoreIcons::getPage(m_iconType, f->m_page)) {
+        for (auto name : MoreIcons::getPage(m_iconType, f->m_pages[m_iconType])) {
             auto itemIcon = GJItemIcon::createBrowserItem(unlockType, 1);
             itemIcon->setScale(GJItemIcon::scaleForType(unlockType));
             MoreIcons::changeSimplePlayer(itemIcon->m_player, name, m_iconType);
@@ -269,20 +303,26 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                 player->setScale(m_iconType == IconType::Jetpack ? 1.5f : 1.6f);
                 auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
                 if (Mod::get()->setSavedValue<std::string>(savedType, name) == name && selectedIconType == m_iconType) {
-                    auto popup = ItemInfoPopup::create(1, unlockType);
-                    if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0)) nameLabel->setString(name.c_str());
+                    auto iconInfo = MoreIcons::infoForType(m_iconType)[name];
+                    auto popup = ItemInfoPopup::create(!iconInfo.id.empty() ? 447 : 1, unlockType);
+                    if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
+                        nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
                     if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
-                    if (Loader::get()->isModLoaded("thesillydoggo.animatedprofiles") && (m_iconType == IconType::Robot || m_iconType == IconType::Spider)) {
-                        for (auto buttonChild : CCArrayExt<CCNode*>(popup->m_buttonMenu->getChildren())) {
-                            if (auto possibleButton = typeinfo_cast<CCMenuItemSpriteExtra*>(buttonChild)) {
-                                if (auto possibleIcon = typeinfo_cast<GJItemIcon*>(possibleButton->getNormalImage()))
-                                    MoreIcons::changeSimplePlayer(possibleIcon->m_player, name, m_iconType);
-                            }
-                        }
-                    }
-                    else if (auto popupIcon = getChildOfType<GJItemIcon>(popup->m_mainLayer, 0)) MoreIcons::changeSimplePlayer(popupIcon->m_player, name, m_iconType);
+                    if (auto popupIcon = findFirstChildRecursive<GJItemIcon>(popup->m_mainLayer, [](auto) { return true; }))
+                        MoreIcons::changeSimplePlayer(popupIcon->m_player, name, m_iconType);
                     if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
                         fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
+                    if (!iconInfo.id.empty()) {
+                        if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                            return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
+                        })) {
+                            auto creditText = static_cast<CCLabelBMFont*>(creditButton->getNormalImage());
+                            creditText->setString(iconInfo.name.c_str());
+                            creditText->limitLabelWidth(100.0f, 0.5f, 0.0f);
+                            creditButton->setEnabled(false);
+                            creditButton->updateSprite();
+                        }
+                    }
                     popup->show();
                 }
                 if (dual) {
@@ -314,16 +354,14 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             f->m_pageBar->removeFromParent();
             f->m_pageBar = nullptr;
         }
-        if (vec.empty()) {
+        if (vec.empty() || MoreIcons::isNormalPage(page, m_iconType)) {
             createNavMenu();
             return;
         }
 
         m_iconSelection->setVisible(false);
 
-        f->m_custom = true;
-        f->m_page = MoreIcons::wrapPage(m_iconType, page);
-        f->m_pages[m_iconType] = f->m_page;
+        f->m_pages[m_iconType] = MoreIcons::wrapPage(m_iconType, page);
         createNavMenu();
 
         m_leftArrow->setVisible(vec.size() > 36);
@@ -342,12 +380,12 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
         auto dual = sdi && sdi->getSavedValue("2pselected", false);
         int i = 1;
-        for (auto name : MoreIcons::getPage(m_iconType, f->m_page)) {
+        for (auto name : MoreIcons::getPage(m_iconType, f->m_pages[m_iconType])) {
             auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
             square->setColor({ 150, 150, 150 });
             auto texture = CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_INFO[name].texture.c_str());
             auto streak = CCSprite::createWithTexture(texture);
-            limitNodeWidth(streak, 27.0f, 999.0f, 0.001f);
+            limitNodeHeight(streak, 27.0f, 999.0f, 0.001f);
             streak->setRotation(-90.0f);
             square->addChild(streak);
             streak->setPosition(square->getContentSize() / 2);
@@ -357,15 +395,17 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                 m_cursor1->setVisible(true);
                 auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
                 if (Mod::get()->setSavedValue<std::string>(savedType, name) == name && selectedIconType == m_iconType) {
-                    auto popup = ItemInfoPopup::create(1, unlockType);
-                    if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0)) nameLabel->setString(name.c_str());
+                    auto trailInfo = MoreIcons::TRAIL_INFO[name];
+                    auto popup = ItemInfoPopup::create(!trailInfo.pack.id.empty() ? 447 : 1, !trailInfo.pack.id.empty() ? UnlockType::Cube : unlockType);
+                    if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
+                        nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
                     if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
                     if (auto popupIcon = getChildOfType<GJItemIcon>(popup->m_mainLayer, 0)) {
                         popupIcon->setVisible(false);
                         auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
                         square->setColor({ 150, 150, 150 });
                         auto streak = CCSprite::createWithTexture(texture);
-                        limitNodeWidth(streak, 27.0f, 999.0f, 0.001f);
+                        limitNodeHeight(streak, 27.0f, 999.0f, 0.001f);
                         streak->setRotation(-90.0f);
                         square->addChild(streak);
                         streak->setPosition(square->getContentSize() / 2);
@@ -376,11 +416,20 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                     }
                     if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
                         fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
+                    if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                        return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
+                    })) {
+                        auto creditText = static_cast<CCLabelBMFont*>(creditButton->getNormalImage());
+                        creditText->setString(trailInfo.pack.name.c_str());
+                        creditText->limitLabelWidth(100.0f, 0.5f, 0.0f);
+                        creditButton->setEnabled(false);
+                        creditButton->updateSprite();
+                    }
                     auto blendToggler = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [this, name](CCMenuItemToggler* sender) {
                         MoreIcons::TRAIL_INFO[name].blend = !sender->isToggled();
                     });
                     blendToggler->setPosition(popup->m_buttonMenu->convertToNodeSpace(winSize / 2 - CCPoint { 123.0f, 78.0f }));
-                    blendToggler->toggle(MoreIcons::TRAIL_INFO[name].blend);
+                    blendToggler->toggle(trailInfo.blend);
                     blendToggler->setID("blend-toggler"_spr);
                     popup->m_buttonMenu->addChild(blendToggler);
                     auto blendLabel = CCLabelBMFont::create("Blend", "bigFont.fnt");
@@ -393,7 +442,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                         MoreIcons::TRAIL_INFO[name].tint = !sender->isToggled();
                     });
                     tintToggler->setPosition(popup->m_buttonMenu->convertToNodeSpace(winSize / 2 - CCPoint { 123.0f, 98.0f }));
-                    tintToggler->toggle(MoreIcons::TRAIL_INFO[name].tint);
+                    tintToggler->toggle(trailInfo.tint);
                     tintToggler->setID("tint-toggler"_spr);
                     popup->m_buttonMenu->addChild(tintToggler);
                     auto tintLabel = CCLabelBMFont::create("Tint", "bigFont.fnt");

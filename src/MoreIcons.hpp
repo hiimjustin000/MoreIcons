@@ -1,7 +1,13 @@
 #include <BS_thread_pool.hpp>
 
+struct TexturePack {
+    std::string name;
+    std::string id;
+};
+
 struct TrailInfo {
     std::string texture;
+    TexturePack pack;
     bool blend;
     bool tint;
 };
@@ -12,6 +18,7 @@ struct ImageData {
     std::string texturePath;
     std::string name;
     std::string frameName;
+    TexturePack pack;
     IconType type;
     int index;
     bool blend;
@@ -49,19 +56,25 @@ namespace {
 class MoreIcons {
 public:
     static inline std::vector<std::string> ICONS;
+    static inline std::unordered_map<std::string, TexturePack> ICON_INFO;
     static inline std::vector<std::string> SHIPS;
+    static inline std::unordered_map<std::string, TexturePack> SHIP_INFO;
     static inline std::vector<std::string> BALLS;
+    static inline std::unordered_map<std::string, TexturePack> BALL_INFO;
     static inline std::vector<std::string> UFOS;
+    static inline std::unordered_map<std::string, TexturePack> UFO_INFO;
     static inline std::vector<std::string> WAVES;
+    static inline std::unordered_map<std::string, TexturePack> WAVE_INFO;
     static inline std::vector<std::string> ROBOTS;
+    static inline std::unordered_map<std::string, TexturePack> ROBOT_INFO;
     static inline std::vector<std::string> SPIDERS;
+    static inline std::unordered_map<std::string, TexturePack> SPIDER_INFO;
     static inline std::vector<std::string> SWINGS;
+    static inline std::unordered_map<std::string, TexturePack> SWING_INFO;
     static inline std::vector<std::string> JETPACKS;
+    static inline std::unordered_map<std::string, TexturePack> JETPACK_INFO;
     static inline std::vector<std::string> TRAILS;
-    static inline std::vector<std::string> ALL;
     static inline std::unordered_map<std::string, TrailInfo> TRAIL_INFO;
-    static inline std::vector<std::string> DUPLICATES;
-    static inline std::vector<std::string> TRAIL_DUPLICATES;
     static inline std::vector<ImageData> IMAGES;
     static inline std::mutex IMAGE_MUTEX;
     static inline std::vector<LogData> LOGS;
@@ -115,14 +128,23 @@ public:
 
     static void clear() {
         ICONS.clear();
+        ICON_INFO.clear();
         SHIPS.clear();
+        SHIP_INFO.clear();
         BALLS.clear();
+        BALL_INFO.clear();
         UFOS.clear();
+        UFO_INFO.clear();
         WAVES.clear();
+        WAVE_INFO.clear();
         ROBOTS.clear();
+        ROBOT_INFO.clear();
         SPIDERS.clear();
+        SPIDER_INFO.clear();
         SWINGS.clear();
+        SWING_INFO.clear();
         JETPACKS.clear();
+        JETPACK_INFO.clear();
         TRAILS.clear();
         saveTrails();
         TRAIL_INFO.clear();
@@ -174,11 +196,11 @@ public:
         const std::vector<std::filesystem::path>& packs, const std::string& suffix, IconType type
     );
 
-    static void loadIcon(const std::filesystem::path& path, IconType type);
+    static void loadIcon(const std::filesystem::path& path, const TexturePack& pack, IconType type);
 
-    static void loadTrails(const std::vector<std::filesystem::path>& pack);
+    static void loadTrails(const std::vector<std::filesystem::path>& packs);
 
-    static void loadTrail(const std::filesystem::path& path);
+    static void loadTrail(const std::filesystem::path& path, const TexturePack& pack);
 
     static void saveTrails() {
         for (auto& [trail, info] : TRAIL_INFO) {
@@ -246,6 +268,33 @@ public:
         }
     }
 
+    static std::unordered_map<std::string, TexturePack>& infoForType(IconType type) {
+        switch (type) {
+            case IconType::Cube:
+                return ICON_INFO;
+            case IconType::Ship:
+                return SHIP_INFO;
+            case IconType::Ball:
+                return BALL_INFO;
+            case IconType::Ufo:
+                return UFO_INFO;
+            case IconType::Wave:
+                return WAVE_INFO;
+            case IconType::Robot:
+                return ROBOT_INFO;
+            case IconType::Spider:
+                return SPIDER_INFO;
+            case IconType::Swing:
+                return SWING_INFO;
+            case IconType::Jetpack:
+                return JETPACK_INFO;
+            default: {
+                static std::unordered_map<std::string, TexturePack> empty;
+                return empty;
+            }
+        }
+    }
+
     static std::string savedForType(IconType type) {
         auto sdi = geode::Loader::get()->getLoadedMod("weebify.separate_dual_icons");
         return savedForType(type, sdi && sdi->getSavedValue("2pselected", false));
@@ -290,19 +339,33 @@ public:
 
     static std::vector<std::string> getPage(IconType type, int page) {
         auto& vec = vectorForType(type);
-        if (vec.size() <= page * 36) return {};
-        return std::vector<std::string>(vec.begin() + page * 36, vec.begin() + std::min((int)vec.size(), (page + 1) * 36));
+        auto customPage = page - (GameManager::get()->countForType(type) + 35) / 36;
+        if (vec.size() <= customPage * 36) return {};
+        if (customPage < 0) return {};
+        return std::vector<std::string>(vec.begin() + customPage * 36, vec.begin() + std::min((int)vec.size(), (customPage + 1) * 36));
+    }
+
+    static int countForType(IconType type) {
+        return vectorForType(type).size() + ((GameManager::get()->countForType(type) + 35) / 36 * 36);
     }
 
     static int wrapPage(IconType type, int page) {
-        auto pages = (vectorForType(type).size() + 35) / 36;
+        auto pages = (countForType(type) + 35) / 36;
         return pages > 0 ? page < 0 ? pages - 1 : page >= pages ? 0 : page : 0;
     }
 
     static int findIconPage(IconType type) {
+        auto active = (GameManager::get()->activeIconForType(type) - 1) / 36;
         auto& vec = vectorForType(type);
-        auto it = std::find(vec.begin(), vec.end(), geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""));
-        return it == vec.end() ? 0 : (it - vec.begin()) / 36;
+        auto savedType = savedForType(type);
+        if (savedType.empty()) return active;
+        auto it = std::find(vec.begin(), vec.end(), geode::Mod::get()->getSavedValue<std::string>(savedType, ""));
+        return it == vec.end() ? active : ((GameManager::get()->countForType(type) + 35) / 36) + (it - vec.begin()) / 36;
+    }
+
+    static bool isNormalPage(int page, IconType type) {
+        auto count = GameManager::get()->countForType(type);
+        return page * 36 < count;
     }
 
     static void useCustomRobot(GJRobotSprite* robot, const std::string& robotFile) {
@@ -320,17 +383,17 @@ public:
     static void showInfoPopup(bool folderButton = false) {
         geode::createQuickPopup(
             "More Icons",
-            fmt::format(
-                "<cg>Icons</c>: {}\n"
-                "<cp>Ships</c>: {}\n"
-                "<cr>Balls</c>: {}\n"
-                "<co>UFOs</c>: {}\n"
-                "<cj>Waves</c>: {}\n"
-                "Robots: {}\n"
-                "<ca>Spiders</c>: {}\n"
-                "<cy>Swings</c>: {}\n"
-                "<cd>Jetpacks</c>: {}\n"
-                "<cb>Trails</c>: {}",
+            fmt::format(std::locale(""),
+                "<cg>Icons</c>: {:L}\n"
+                "<cp>Ships</c>: {:L}\n"
+                "<cr>Balls</c>: {:L}\n"
+                "<co>UFOs</c>: {:L}\n"
+                "<cj>Waves</c>: {:L}\n"
+                "Robots: {:L}\n"
+                "<ca>Spiders</c>: {:L}\n"
+                "<cy>Swings</c>: {:L}\n"
+                "<cd>Jetpacks</c>: {:L}\n"
+                "<cb>Trails</c>: {:L}",
                 ICONS.size(),
                 SHIPS.size(),
                 BALLS.size(),

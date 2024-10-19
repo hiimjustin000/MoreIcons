@@ -1,6 +1,12 @@
 # More Icons Changelog
+## v1.3.3 (2024-10-19)
+- Improved the duplicate system
+- Changed page functionality in the icon kit
+- Added texture pack credits to the icon kit ([#8](https://github.com/hiimjustin000/MoreIcons/issues/8))
+- Added number formatting to the info popup in the icon kit
+
 ## v1.3.2 (2024-10-13)
-- Changed the More Icons button in the icon kit to only show the info when there are no logs
+- Changed the More Icons button in the icon kit to only show the info when there are no logs ([#10](https://github.com/hiimjustin000/MoreIcons/issues/10))
 
 ## v1.3.1 (2024-10-12)
 - Fixed a bug where the game would crash when pressing the More Icons button in the icon kit

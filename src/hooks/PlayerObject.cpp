@@ -14,8 +14,14 @@ class $modify(MIPlayerObject, PlayerObject) {
 
         if (!gameLayer || (gameLayer->m_player1 && gameLayer->m_player2)) return true;
 
-        if (!gameLayer->m_player1) useCustomIcon(false);
-        else if (!gameLayer->m_player2) useCustomIcon(true);
+        if (!gameLayer->m_player1) {
+            useCustomIcon(false);
+            useCustomShip(false);
+        }
+        else if (!gameLayer->m_player2) {
+            useCustomIcon(true);
+            useCustomShip(true);
+        }
 
         return true;
     }

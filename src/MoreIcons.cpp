@@ -40,7 +40,9 @@ std::vector<std::filesystem::directory_entry> MoreIcons::naturalSort(const std::
 }
 
 void MoreIcons::naturalSort(std::vector<std::string>& vec) {
-    std::sort(vec.begin(), vec.end(), [](const std::string& a, const std::string& b) {
+    std::sort(vec.begin(), vec.end(), [](const std::string& aStr, const std::string& bStr) {
+        auto a = aStr.substr(aStr.find_first_of(':') + 1);
+        auto b = bStr.substr(bStr.find_first_of(':') + 1);
         auto aIt = a.begin();
         auto bIt = b.begin();
 
@@ -107,25 +109,29 @@ void MoreIcons::load(LoadingLayer* layer) {
 
     {
         std::lock_guard lock(IMAGE_MUTEX);
-        auto textureCache = cocos2d::CCTextureCache::get();
-        auto spriteFrameCache = cocos2d::CCSpriteFrameCache::get();
+        auto textureCache = CCTextureCache::get();
+        auto spriteFrameCache = CCSpriteFrameCache::get();
         for (auto& image : IMAGES) {
-            auto texture = new cocos2d::CCTexture2D();
+            auto texture = new CCTexture2D();
             if (texture->initWithImage(image.image)) {
                 textureCache->m_pTextures->setObject(texture, image.texturePath);
                 if (!image.dict && !image.frameName.empty())
                     spriteFrameCache->addSpriteFrame(
-                        cocos2d::CCSpriteFrame::createWithTexture(texture, { { 0, 0 }, texture->getContentSize() }),
+                        CCSpriteFrame::createWithTexture(texture, { { 0, 0 }, texture->getContentSize() }),
                         image.frameName.c_str()
                     );
                 else if (image.dict) {
                     _addSpriteFramesWithDictionary(image.dict, texture);
                     CC_SAFE_RELEASE(image.dict);
                 }
-                if (image.index == 0) vectorForType(image.type).push_back(image.name);
+                if (image.index == 0) {
+                    vectorForType(image.type).push_back(image.name);
+                    if (image.type != IconType::Special) infoForType(image.type)[image.name] = image.pack;
+                }
                 if (image.type == IconType::Special) {
                     TRAIL_INFO[image.name] = {
                         .texture = image.texturePath,
+                        .pack = image.pack,
                         .blend = image.blend,
                         .tint = image.tint
                     };
@@ -138,9 +144,6 @@ void MoreIcons::load(LoadingLayer* layer) {
 
         IMAGES.clear();
         restoreSaved();
-        ALL.clear();
-        DUPLICATES.clear();
-        TRAIL_DUPLICATES.clear();
         naturalSort(ICONS);
         naturalSort(SHIPS);
         naturalSort(BALLS);
@@ -152,14 +155,42 @@ void MoreIcons::load(LoadingLayer* layer) {
         naturalSort(JETPACKS);
         naturalSort(TRAILS);
 
-        if (auto smallLabel2 = static_cast<cocos2d::CCLabelBMFont*>(layer->getChildByID("geode-small-label-2")))
+        if (auto smallLabel2 = static_cast<CCLabelBMFont*>(layer->getChildByID("geode-small-label-2")))
             smallLabel2->setString("");
     }
 }
 
 void MoreIcons::loadIcons(const std::vector<std::filesystem::path>& packs, const std::string& suffix, IconType type) {
     int i = 0;
-    for (auto& packPath : packs) {
+    for (auto& packPath : packs) { 
+        std::string packName;
+        std::string packID;
+        if (i != 0) {
+            auto rootPackPath = packPath.parent_path().parent_path();
+            auto packJSON = rootPackPath / "pack.json";
+            if (std::filesystem::exists(packJSON)) {
+                std::ifstream file(packJSON);
+                std::stringstream bufferStream;
+                bufferStream << file.rdbuf();
+                std::string error;
+                auto tryJson = matjson::parse(bufferStream.str(), error);
+                auto packFileName = rootPackPath.filename().string();
+                if (!error.empty()) {
+                    packName = packFileName;
+                    packID = packFileName;
+                }
+                auto json = tryJson.value_or(matjson::Object());
+                if (json.contains("name") && json["name"].is_string()) packName = json["name"].as_string();
+                else packName = packFileName;
+                if (json.contains("id") && json["id"].is_string()) packID = json["id"].as_string();
+                else packID = packFileName;
+            }
+        }
+        else {
+            packName = "More Icons";
+            packID = "";
+        }
+
         auto path = packPath / suffix;
         if (!std::filesystem::exists(path)) {
             if (i == 0) std::filesystem::create_directories(path);
@@ -167,32 +198,26 @@ void MoreIcons::loadIcons(const std::vector<std::filesystem::path>& packs, const
         }
         log::info("Loading {}s from {}", suffix, path.string());
 
-        auto textureCache = CCTextureCache::get();
-        auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
-        auto spriteFrameCache = CCSpriteFrameCache::get();
         for (auto& entry : naturalSort(path)) {
             if (!entry.is_regular_file() && !entry.is_directory()) continue;
 
-            loadIcon(entry.path(), type);
+            loadIcon(entry.path(), {
+                .name = packName,
+                .id = packID
+            }, type);
         }
 
         i++;
     }
 }
 
-void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
+void MoreIcons::loadIcon(const std::filesystem::path& path, const TexturePack& pack, IconType type) {
     if (!std::filesystem::exists(path)) return;
 
     auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
     if (std::filesystem::is_directory(path)) {
-        auto name = path.stem().string();
-        if (std::find(ALL.begin(), ALL.end(), name) != ALL.end()) {
-            DUPLICATES.push_back(name);
-            name += fmt::format("_{:02}", std::count(DUPLICATES.begin(), DUPLICATES.end(), name));
-        }
-        ALL.push_back(name);
-
-        sharedPool().detach_task([path, textureQuality, name, type] {
+        sharedPool().detach_task([path, pack, textureQuality, type] {
+            auto name = (!pack.id.empty() ? pack.id + ":" : "") + path.stem().string();
             auto textureCache = CCTextureCache::get();
             auto spriteFrameCache = CCSpriteFrameCache::get();
             int i = 0;
@@ -261,6 +286,7 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
                         .texturePath = pngPath,
                         .name = name,
                         .frameName = getFrameName(std::filesystem::path(noGraphicPngPath).filename().string(), name, type),
+                        .pack = pack,
                         .type = type,
                         .index = i
                     });
@@ -274,64 +300,59 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
     else if (std::filesystem::is_regular_file(path)) {
         if (path.extension() != ".plist") return;
 
-        auto pathFilename = path.filename().string();
-        auto fileQuality = kTextureQualityLow;
-        if (pathFilename.ends_with("-uhd.plist")) {
-            if (textureQuality != kTextureQualityHigh) {
-                auto logMessage = fmt::format("{}: Ignoring high-quality PLIST file for {} texture quality", path.string(),
-                    textureQuality == kTextureQualityMedium ? "medium" : "low");
-                log::warn("{}", logMessage);
-                {
-                    std::lock_guard lock(LOG_MUTEX);
-                    LOGS.push_back({ .message = logMessage, .type = LogType::Info });
+        sharedPool().detach_task([path, pack, textureQuality, type] {
+            auto pathFilename = path.filename().string();
+            auto fileQuality = kTextureQualityLow;
+            if (pathFilename.ends_with("-uhd.plist")) {
+                if (textureQuality != kTextureQualityHigh) {
+                    auto logMessage = fmt::format("{}: Ignoring high-quality PLIST file for {} texture quality", path.string(),
+                        textureQuality == kTextureQualityMedium ? "medium" : "low");
+                    log::warn("{}", logMessage);
+                    {
+                        std::lock_guard lock(LOG_MUTEX);
+                        LOGS.push_back({ .message = logMessage, .type = LogType::Info });
+                    }
+                    return;
                 }
-                return;
+
+                fileQuality = kTextureQualityHigh;
+            }
+            else if (pathFilename.ends_with("-hd.plist")) {
+                if (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium) {
+                    auto logMessage = fmt::format("{}: Ignoring medium-quality PLIST file for low texture quality", path.string());
+                    log::warn("{}", logMessage);
+                    {
+                        std::lock_guard lock(LOG_MUTEX);
+                        LOGS.push_back({ .message = logMessage, .type = LogType::Info });
+                    }
+                    return;
+                }
+
+                if (
+                    std::filesystem::exists(replaceEnd(path.string(), "-hd.plist", "-uhd.plist")) &&
+                    textureQuality == kTextureQualityHigh
+                ) return;
+                else fileQuality = kTextureQualityMedium;
+            }
+            else {
+                if (
+                    std::filesystem::exists(replaceEnd(path.string(), ".plist", "-uhd.plist")) &&
+                    textureQuality == kTextureQualityHigh
+                ) return;
+                else if (
+                    std::filesystem::exists(replaceEnd(path.string(), ".plist", "-hd.plist")) &&
+                    (textureQuality == kTextureQualityMedium || textureQuality == kTextureQualityHigh)
+                ) return;
+                else fileQuality = kTextureQualityLow;
             }
 
-            fileQuality = kTextureQualityHigh;
-        }
-        else if (pathFilename.ends_with("-hd.plist")) {
-            if (textureQuality != kTextureQualityHigh && textureQuality != kTextureQualityMedium) {
-                auto logMessage = fmt::format("{}: Ignoring medium-quality PLIST file for low texture quality", path.string());
-                log::warn("{}", logMessage);
-                {
-                    std::lock_guard lock(LOG_MUTEX);
-                    LOGS.push_back({ .message = logMessage, .type = LogType::Info });
-                }
-                return;
-            }
+            auto plistPath = path.string();
+            std::string noGraphicPlistPath;
+            if (fileQuality == kTextureQualityHigh) noGraphicPlistPath = replaceEnd(plistPath, "-uhd.plist", ".plist");
+            else if (fileQuality == kTextureQualityMedium) noGraphicPlistPath = replaceEnd(plistPath, "-hd.plist", ".plist");
+            else noGraphicPlistPath = plistPath;
+            auto name = (!pack.id.empty() ? pack.id + ":" : "") + std::filesystem::path(noGraphicPlistPath).stem().string();
 
-            if (
-                std::filesystem::exists(replaceEnd(path.string(), "-hd.plist", "-uhd.plist")) &&
-                textureQuality == kTextureQualityHigh
-            ) return;
-            else fileQuality = kTextureQualityMedium;
-        }
-        else {
-            if (
-                std::filesystem::exists(replaceEnd(path.string(), ".plist", "-uhd.plist")) &&
-                textureQuality == kTextureQualityHigh
-            ) return;
-            else if (
-                std::filesystem::exists(replaceEnd(path.string(), ".plist", "-hd.plist")) &&
-                (textureQuality == kTextureQualityMedium || textureQuality == kTextureQualityHigh)
-            ) return;
-            else fileQuality = kTextureQualityLow;
-        }
-
-        auto plistPath = path.string();
-        std::string noGraphicPlistPath;
-        if (fileQuality == kTextureQualityHigh) noGraphicPlistPath = replaceEnd(plistPath, "-uhd.plist", ".plist");
-        else if (fileQuality == kTextureQualityMedium) noGraphicPlistPath = replaceEnd(plistPath, "-hd.plist", ".plist");
-        else noGraphicPlistPath = plistPath;
-        auto name = std::filesystem::path(noGraphicPlistPath).stem().string();
-        if (std::find(ALL.begin(), ALL.end(), name) != ALL.end()) {
-            DUPLICATES.push_back(name);
-            name += fmt::format("_{:02}", std::count(DUPLICATES.begin(), DUPLICATES.end(), name));
-        }
-        ALL.push_back(name);
-
-        sharedPool().detach_task([path, textureQuality, name, plistPath, type] {
             auto dict = CCDictionary::createWithContentsOfFileThreadSafe(plistPath.c_str());
             auto frames = new CCDictionary();
             for (auto [frameName, frame] : CCDictionaryExt<std::string, CCDictionary*>(static_cast<CCDictionary*>(dict->objectForKey("frames")))) {
@@ -342,13 +363,17 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
             auto texturePath = std::filesystem::path(metadata->valueForKey("textureFileName")->getCString()).filename().string();
             auto fullTexturePath = (path.parent_path() / texturePath).string();
             if (!std::filesystem::exists(fullTexturePath)) {
-                auto logMessage = fmt::format("{}: Texture file {} not found", path.string(), texturePath); 
-                log::warn("{}", logMessage);
-                {
-                    std::lock_guard lock(LOG_MUTEX);
-                    LOGS.push_back({ .message = logMessage, .type = LogType::Error });
-                    if (HIGHEST_SEVERITY < LogType::Error) HIGHEST_SEVERITY = LogType::Error;
+                auto fallbackTexturePath = std::filesystem::path(plistPath).replace_extension(".png").string();
+                if (!std::filesystem::exists((fallbackTexturePath))) {
+                    auto logMessage = fmt::format("{}: Texture file {} not found, no fallback", path.string(), texturePath); 
+                    log::warn("{}", logMessage);
+                    {
+                        std::lock_guard lock(LOG_MUTEX);
+                        LOGS.push_back({ .message = logMessage, .type = LogType::Error });
+                        if (HIGHEST_SEVERITY < LogType::Error) HIGHEST_SEVERITY = LogType::Error;
+                    }
                 }
+                else fullTexturePath = fallbackTexturePath;
                 return;
             }
 
@@ -361,6 +386,7 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
                     .texturePath = fullTexturePath,
                     .name = name,
                     .frameName = "",
+                    .pack = pack,
                     .type = type,
                     .index = 0
                 });
@@ -376,6 +402,34 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, IconType type) {
 void MoreIcons::loadTrails(const std::vector<std::filesystem::path>& packs) {
     int i = 0;
     for (auto& packPath : packs) {
+        std::string packName;
+        std::string packID;
+        if (i != 0) {
+            auto rootPackPath = packPath.parent_path().parent_path();
+            auto packJSON = rootPackPath / "pack.json";
+            if (std::filesystem::exists(packJSON)) {
+                std::ifstream file(packJSON);
+                std::stringstream bufferStream;
+                bufferStream << file.rdbuf();
+                std::string error;
+                auto tryJson = matjson::parse(bufferStream.str(), error);
+                auto packFileName = rootPackPath.filename().string();
+                if (!error.empty()) {
+                    packName = packFileName;
+                    packID = packFileName;
+                }
+                auto json = tryJson.value_or(matjson::Object());
+                if (json.contains("name") && json["name"].is_string()) packName = json["name"].as_string();
+                else packName = packFileName;
+                if (json.contains("id") && json["id"].is_string()) packID = json["id"].as_string();
+                else packID = packFileName;
+            }
+        }
+        else {
+            packName = "More Icons";
+            packID = "";
+        }
+
         auto path = packPath / "trail";
         log::info("Loading trails from {}", path.string());
         if (!std::filesystem::exists(path)) {
@@ -383,30 +437,27 @@ void MoreIcons::loadTrails(const std::vector<std::filesystem::path>& packs) {
             return;
         }
 
-        auto textureCache = CCTextureCache::get();
         for (auto& entry : naturalSort(path)) {
             if (!entry.is_regular_file()) continue;
 
             auto entryPath = entry.path();
             if (entryPath.extension() != ".png") continue;
 
-            loadTrail(entryPath);
+            loadTrail(entryPath, {
+                .name = packName,
+                .id = packID
+            });
         }
 
         i++;
     }
 }
 
-void MoreIcons::loadTrail(const std::filesystem::path& path) {
+void MoreIcons::loadTrail(const std::filesystem::path& path, const TexturePack& pack) {
     if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path) || path.extension() != ".png") return;
 
-    auto name = path.stem().string();
-    if (std::find(TRAILS.begin(), TRAILS.end(), name) != TRAILS.end()) {
-        TRAIL_DUPLICATES.push_back(name);
-        name += fmt::format("_{:02}", std::count(TRAIL_DUPLICATES.begin(), TRAIL_DUPLICATES.end(), name));
-    }
-
-    sharedPool().detach_task([path, name] {
+    sharedPool().detach_task([path, pack] {
+        auto name = (!pack.id.empty() ? pack.id + ":" : "") + path.stem().string();
         auto jsonPath = std::filesystem::path(path).replace_extension(".json");
         matjson::Value json;
         if (!std::filesystem::exists(jsonPath)) json = matjson::Object { { "blend", false }, { "tint", false } };
@@ -439,6 +490,7 @@ void MoreIcons::loadTrail(const std::filesystem::path& path) {
                 .texturePath = fullTexturePath,
                 .name = name,
                 .frameName = "",
+                .pack = pack,
                 .type = IconType::Special,
                 .index = 0,
                 .blend = json.contains("blend") && json["blend"].is_bool() ? json["blend"].as_bool() : false,
