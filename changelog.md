@@ -1,4 +1,8 @@
 # More Icons Changelog
+## v1.3.4 (2024-10-21)
+- Moved some logic to More Icons API
+- Tweaked the logo to add drop shadow
+
 ## v1.3.3 (2024-10-19)
 - Improved the duplicate system
 - Changed page functionality in the icon kit

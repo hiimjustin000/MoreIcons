@@ -27,12 +27,12 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         f->m_pages[IconType::Cube] = m_iconPages[IconType::Cube];
 
         auto iconType = GameManager::get()->m_playerIconType;
-        MoreIcons::changeSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(iconType, false), ""), iconType);
+        MoreIconsAPI::updateSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(iconType, false), ""), iconType);
         auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
         if (sdi) {
             auto lastmode = (IconType)sdi->getSavedValue("lastmode", 0);
-            MoreIcons::changeSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
-                Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(lastmode, true), ""), lastmode);
+            MoreIconsAPI::updateSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
+                Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(lastmode, true), ""), lastmode);
         }
 
         auto customIcon = Mod::get()->getSavedValue<std::string>("icon", "");
@@ -107,10 +107,10 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         MoreIcons::swapDual("jetpack");
         MoreIcons::swapDual("trail");
         auto iconType = GameManager::get()->m_playerIconType;
-        MoreIcons::changeSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(iconType, false), ""), iconType);
+        MoreIconsAPI::updateSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(iconType, false), ""), iconType);
         auto lastmode = (IconType)Loader::get()->getLoadedMod("weebify.separate_dual_icons")->getSavedValue("lastmode", 0);
-        MoreIcons::changeSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
-            Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(lastmode, true), ""), lastmode);
+        MoreIconsAPI::updateSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
+            Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(lastmode, true), ""), lastmode);
         setupCustomPage(f->m_pages[m_iconType]);
     }
 
@@ -261,12 +261,12 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         createNavMenu();
 
         auto iconType = GameManager::get()->m_playerIconType;
-        MoreIcons::changeSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(iconType, false), ""), iconType);
+        MoreIconsAPI::updateSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(iconType, false), ""), iconType);
         auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
         if (sdi) {
             auto lastmode = (IconType)sdi->getSavedValue("lastmode", 0);
-            MoreIcons::changeSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
-                Mod::get()->getSavedValue<std::string>(MoreIcons::savedForType(lastmode, true), ""), lastmode);
+            MoreIconsAPI::updateSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
+                Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(lastmode, true), ""), lastmode);
         }
 
         auto spriteFrameCache = CCSpriteFrameCache::get();
@@ -287,7 +287,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         for (auto name : MoreIcons::getPage(m_iconType, f->m_pages[m_iconType])) {
             auto itemIcon = GJItemIcon::createBrowserItem(unlockType, 1);
             itemIcon->setScale(GJItemIcon::scaleForType(unlockType));
-            MoreIcons::changeSimplePlayer(itemIcon->m_player, name, m_iconType);
+            MoreIconsAPI::updateSimplePlayer(itemIcon->m_player, name, m_iconType);
             if (hasAnimProf) {
                 if (auto robotSprite = itemIcon->m_player->m_robotSprite) robotSprite->runAnimation("idle01");
                 if (auto spiderSprite = itemIcon->m_player->m_spiderSprite) spiderSprite->runAnimation("idle01");
@@ -298,7 +298,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                 auto player = dual ? static_cast<SimplePlayer*>(getChildByID("player2-icon")) : m_playerObject;
                 player->updatePlayerFrame(1, m_iconType);
                 player->updateColors();
-                MoreIcons::changeSimplePlayer(player, name, m_iconType);
+                MoreIconsAPI::updateSimplePlayer(player, name, m_iconType);
                 if (!dual) gameManager->m_playerIconType = m_iconType;
                 player->setScale(m_iconType == IconType::Jetpack ? 1.5f : 1.6f);
                 auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
@@ -309,7 +309,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                         nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
                     if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
                     if (auto popupIcon = findFirstChildRecursive<GJItemIcon>(popup->m_mainLayer, [](auto) { return true; }))
-                        MoreIcons::changeSimplePlayer(popupIcon->m_player, name, m_iconType);
+                        MoreIconsAPI::updateSimplePlayer(popupIcon->m_player, name, m_iconType);
                     if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
                         fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
                     if (!iconInfo.id.empty()) {

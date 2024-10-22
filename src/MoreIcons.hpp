@@ -1,4 +1,5 @@
 #include <BS_thread_pool.hpp>
+#include <hiimjustin000.more_icons_api/include/MoreIconsAPI.hpp>
 
 struct TexturePack {
     std::string name;
@@ -214,14 +215,12 @@ public:
     }
 
     static void changeSimplePlayer(SimplePlayer* player, IconType type) {
-        changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);
+        MoreIconsAPI::updateSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type), ""), type);
     }
 
     static void changeSimplePlayer(SimplePlayer* player, IconType type, bool dual) {
-        changeSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(savedForType(type, dual), ""), type);
+        MoreIconsAPI::updateSimplePlayer(player, geode::Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(type, dual), ""), type);
     }
-
-    static void changeSimplePlayer(SimplePlayer*, const std::string&, IconType);
 
     static bool doesExist(cocos2d::CCSpriteFrame* frame) {
         return frame != nullptr && frame->getTag() != 105871529;
@@ -297,26 +296,7 @@ public:
 
     static std::string savedForType(IconType type) {
         auto sdi = geode::Loader::get()->getLoadedMod("weebify.separate_dual_icons");
-        return savedForType(type, sdi && sdi->getSavedValue("2pselected", false));
-    }
-
-    static std::string savedForType(IconType type, bool dual) {
-        std::string prefix;
-        switch (type) {
-            case IconType::Cube: prefix = "icon"; break;
-            case IconType::Ship: prefix = "ship"; break;
-            case IconType::Ball: prefix = "ball"; break;
-            case IconType::Ufo: prefix = "ufo"; break;
-            case IconType::Wave: prefix = "wave"; break;
-            case IconType::Robot: prefix = "robot"; break;
-            case IconType::Spider: prefix = "spider"; break;
-            case IconType::Swing: prefix = "swing"; break;
-            case IconType::Jetpack: prefix = "jetpack"; break;
-            case IconType::Special: prefix = "trail"; break;
-            default: prefix = ""; break;
-        }
-
-        return getDual(prefix, dual);
+        return MoreIconsAPI::savedForType(type, sdi && sdi->getSavedValue("2pselected", false));
     }
 
     static std::string getFrameName(const std::string& name, const std::string prefix, IconType type) {
@@ -367,18 +347,6 @@ public:
         auto count = GameManager::get()->countForType(type);
         return page * 36 < count;
     }
-
-    static void useCustomRobot(GJRobotSprite* robot, const std::string& robotFile) {
-        if (!robot || robotFile.empty() || !hasRobot(robotFile)) return;
-        useCustomSprite(robot, robotFile);
-    }
-
-    static void useCustomSpider(GJSpiderSprite* spider, const std::string& spiderFile) {
-        if (!spider || spiderFile.empty() || !hasSpider(spiderFile)) return;
-        useCustomSprite(spider, spiderFile);
-    }
-
-    static void useCustomSprite(GJRobotSprite* robot, const std::string& file);
 
     static void showInfoPopup(bool folderButton = false) {
         geode::createQuickPopup(

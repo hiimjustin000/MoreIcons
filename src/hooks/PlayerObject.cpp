@@ -204,12 +204,12 @@ class $modify(MIPlayerObject, PlayerObject) {
         if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this) {
             auto robotFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", false), "");
             if (robotFile.empty() || !MoreIcons::hasRobot(robotFile)) return;
-            MoreIcons::useCustomRobot(m_robotSprite, robotFile);
+            MoreIconsAPI::updateRobotSprite(m_robotSprite, robotFile, IconType::Robot);
         }
         else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this) {
             auto robotFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("robot", true), "");
             if (robotFile.empty() || !MoreIcons::hasRobot(robotFile)) return;
-            MoreIcons::useCustomRobot(m_robotSprite, robotFile);
+            MoreIconsAPI::updateRobotSprite(m_robotSprite, robotFile, IconType::Robot);
         }
         else return;
 
@@ -236,12 +236,12 @@ class $modify(MIPlayerObject, PlayerObject) {
         if (!m_gameLayer->m_player1 || m_gameLayer->m_player1 == this) {
             auto spiderFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("spider", false), "");
             if (spiderFile.empty() || !MoreIcons::hasSpider(spiderFile)) return;
-            MoreIcons::useCustomSpider(m_spiderSprite, spiderFile);
+            MoreIconsAPI::updateRobotSprite(m_spiderSprite, spiderFile, IconType::Spider);
         }
         else if (!m_gameLayer->m_player2 || m_gameLayer->m_player2 == this) {
             auto spiderFile = Mod::get()->getSavedValue<std::string>(MoreIcons::getDual("spider", true), "");
             if (spiderFile.empty() || !MoreIcons::hasSpider(spiderFile)) return;
-            MoreIcons::useCustomSpider(m_spiderSprite, spiderFile);
+            MoreIconsAPI::updateRobotSprite(m_spiderSprite, spiderFile, IconType::Spider);
         }
         else return;
 
