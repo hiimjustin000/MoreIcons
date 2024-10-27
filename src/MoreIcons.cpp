@@ -1,6 +1,40 @@
 #include "MoreIcons.hpp"
+#include <Geode/loader/Dispatch.hpp>
 
 using namespace geode::prelude;
+
+using SimplePlayerFilter = DispatchFilter<SimplePlayer*, const std::string&, IconType>;
+using RobotSpriteFilter = DispatchFilter<GJRobotSprite*, const std::string&>;
+using RobotSpriteTypeFilter = DispatchFilter<GJRobotSprite*, const std::string&, IconType>;
+using PlayerObjectFilter = DispatchFilter<PlayerObject*, const std::string&>;
+using PlayerObjectTypeFilter = DispatchFilter<PlayerObject*, const std::string&, IconType>;
+
+$execute {
+    new EventListener<SimplePlayerFilter>(+[](SimplePlayer* player, const std::string& icon, IconType type) {
+        MoreIconsAPI::updateSimplePlayer(player, icon, type);
+        return ListenerResult::Stop;
+    }, SimplePlayerFilter("simple-player"_spr));
+
+    new EventListener<RobotSpriteFilter>(+[](GJRobotSprite* sprite, const std::string& icon) {
+        MoreIconsAPI::updateRobotSprite(sprite, icon);
+        return ListenerResult::Stop;
+    }, RobotSpriteFilter("robot-sprite"_spr));
+
+    new EventListener<RobotSpriteTypeFilter>(+[](GJRobotSprite* sprite, const std::string& icon, IconType type) {
+        MoreIconsAPI::updateRobotSprite(sprite, icon, type);
+        return ListenerResult::Stop;
+    }, RobotSpriteTypeFilter("robot-sprite"_spr));
+
+    new EventListener<PlayerObjectFilter>(+[](PlayerObject* object, const std::string& icon) {
+        MoreIconsAPI::updatePlayerObject(object, icon);
+        return ListenerResult::Stop;
+    }, PlayerObjectFilter("player-object"_spr));
+
+    new EventListener<PlayerObjectTypeFilter>(+[](PlayerObject* object, const std::string& icon, IconType type) {
+        MoreIconsAPI::updatePlayerObject(object, icon, type);
+        return ListenerResult::Stop;
+    }, PlayerObjectTypeFilter("player-object"_spr));
+}
 
 $on_mod(DataSaved) {
     MoreIcons::saveTrails();
@@ -125,7 +159,7 @@ void MoreIcons::load(LoadingLayer* layer) {
                     CC_SAFE_RELEASE(image.dict);
                 }
                 if (image.index == 0) {
-                    vectorForType(image.type).push_back(image.name);
+                    MoreIconsAPI::vectorForType(image.type).push_back(image.name);
                     if (image.type != IconType::Special) infoForType(image.type)[image.name] = image.pack;
                 }
                 if (image.type == IconType::Special) {
@@ -144,16 +178,16 @@ void MoreIcons::load(LoadingLayer* layer) {
 
         IMAGES.clear();
         restoreSaved();
-        naturalSort(ICONS);
-        naturalSort(SHIPS);
-        naturalSort(BALLS);
-        naturalSort(UFOS);
-        naturalSort(WAVES);
-        naturalSort(ROBOTS);
-        naturalSort(SPIDERS);
-        naturalSort(SWINGS);
-        naturalSort(JETPACKS);
-        naturalSort(TRAILS);
+        naturalSort(MoreIconsAPI::ICONS);
+        naturalSort(MoreIconsAPI::SHIPS);
+        naturalSort(MoreIconsAPI::BALLS);
+        naturalSort(MoreIconsAPI::UFOS);
+        naturalSort(MoreIconsAPI::WAVES);
+        naturalSort(MoreIconsAPI::ROBOTS);
+        naturalSort(MoreIconsAPI::SPIDERS);
+        naturalSort(MoreIconsAPI::SWINGS);
+        naturalSort(MoreIconsAPI::JETPACKS);
+        naturalSort(MoreIconsAPI::TRAILS);
 
         if (auto smallLabel2 = static_cast<CCLabelBMFont*>(layer->getChildByID("geode-small-label-2")))
             smallLabel2->setString("");
@@ -162,7 +196,7 @@ void MoreIcons::load(LoadingLayer* layer) {
 
 void MoreIcons::loadIcons(const std::vector<std::filesystem::path>& packs, const std::string& suffix, IconType type) {
     int i = 0;
-    for (auto& packPath : packs) { 
+    for (auto& packPath : packs) {
         std::string packName;
         std::string packID;
         if (i != 0) {
@@ -365,7 +399,7 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, const TexturePack& p
             if (!std::filesystem::exists(fullTexturePath)) {
                 auto fallbackTexturePath = std::filesystem::path(plistPath).replace_extension(".png").string();
                 if (!std::filesystem::exists((fallbackTexturePath))) {
-                    auto logMessage = fmt::format("{}: Texture file {} not found, no fallback", path.string(), texturePath); 
+                    auto logMessage = fmt::format("{}: Texture file {} not found, no fallback", path.string(), texturePath);
                     log::warn("{}", logMessage);
                     {
                         std::lock_guard lock(LOG_MUTEX);

@@ -1,5 +1,5 @@
 #include <BS_thread_pool.hpp>
-#include <hiimjustin000.more_icons_api/include/MoreIconsAPI.hpp>
+#include "api/MoreIconsAPI.hpp"
 
 struct TexturePack {
     std::string name;
@@ -56,25 +56,15 @@ namespace {
 
 class MoreIcons {
 public:
-    static inline std::vector<std::string> ICONS;
     static inline std::unordered_map<std::string, TexturePack> ICON_INFO;
-    static inline std::vector<std::string> SHIPS;
     static inline std::unordered_map<std::string, TexturePack> SHIP_INFO;
-    static inline std::vector<std::string> BALLS;
     static inline std::unordered_map<std::string, TexturePack> BALL_INFO;
-    static inline std::vector<std::string> UFOS;
     static inline std::unordered_map<std::string, TexturePack> UFO_INFO;
-    static inline std::vector<std::string> WAVES;
     static inline std::unordered_map<std::string, TexturePack> WAVE_INFO;
-    static inline std::vector<std::string> ROBOTS;
     static inline std::unordered_map<std::string, TexturePack> ROBOT_INFO;
-    static inline std::vector<std::string> SPIDERS;
     static inline std::unordered_map<std::string, TexturePack> SPIDER_INFO;
-    static inline std::vector<std::string> SWINGS;
     static inline std::unordered_map<std::string, TexturePack> SWING_INFO;
-    static inline std::vector<std::string> JETPACKS;
     static inline std::unordered_map<std::string, TexturePack> JETPACK_INFO;
-    static inline std::vector<std::string> TRAILS;
     static inline std::unordered_map<std::string, TrailInfo> TRAIL_INFO;
     static inline std::vector<ImageData> IMAGES;
     static inline std::mutex IMAGE_MUTEX;
@@ -82,71 +72,31 @@ public:
     static inline std::mutex LOG_MUTEX;
     static inline LogType HIGHEST_SEVERITY = LogType::Info;
 
-    static bool hasIcon(const std::string& name) {
-        return !ICONS.empty() && std::find(ICONS.begin(), ICONS.end(), name) != ICONS.end();
-    }
-
-    static bool hasShip(const std::string& name) {
-        return !SHIPS.empty() && std::find(SHIPS.begin(), SHIPS.end(), name) != SHIPS.end();
-    }
-
-    static bool hasBall(const std::string& name) {
-        return !BALLS.empty() && std::find(BALLS.begin(), BALLS.end(), name) != BALLS.end();
-    }
-
-    static bool hasUfo(const std::string& name) {
-        return !UFOS.empty() && std::find(UFOS.begin(), UFOS.end(), name) != UFOS.end();
-    }
-
-    static bool hasWave(const std::string& name) {
-        return !WAVES.empty() && std::find(WAVES.begin(), WAVES.end(), name) != WAVES.end();
-    }
-
-    static bool hasRobot(const std::string& name) {
-        return !ROBOTS.empty() && std::find(ROBOTS.begin(), ROBOTS.end(), name) != ROBOTS.end();
-    }
-
-    static bool hasSpider(const std::string& name) {
-        return !SPIDERS.empty() && std::find(SPIDERS.begin(), SPIDERS.end(), name) != SPIDERS.end();
-    }
-
-    static bool hasSwing(const std::string& name) {
-        return !SWINGS.empty() && std::find(SWINGS.begin(), SWINGS.end(), name) != SWINGS.end();
-    }
-
-    static bool hasJetpack(const std::string& name) {
-        return !JETPACKS.empty() && std::find(JETPACKS.begin(), JETPACKS.end(), name) != JETPACKS.end();
-    }
-
-    static bool hasTrail(const std::string& name) {
-        return !TRAILS.empty() && std::find(TRAILS.begin(), TRAILS.end(), name) != TRAILS.end();
-    }
-
     static BS::thread_pool& sharedPool() {
         static BS::thread_pool _sharedPool(std::thread::hardware_concurrency() - 2);
         return _sharedPool;
     }
 
     static void clear() {
-        ICONS.clear();
+        MoreIconsAPI::ICONS.clear();
         ICON_INFO.clear();
-        SHIPS.clear();
+        MoreIconsAPI::SHIPS.clear();
         SHIP_INFO.clear();
-        BALLS.clear();
+        MoreIconsAPI::BALLS.clear();
         BALL_INFO.clear();
-        UFOS.clear();
+        MoreIconsAPI::UFOS.clear();
         UFO_INFO.clear();
-        WAVES.clear();
+        MoreIconsAPI::WAVES.clear();
         WAVE_INFO.clear();
-        ROBOTS.clear();
+        MoreIconsAPI::ROBOTS.clear();
         ROBOT_INFO.clear();
-        SPIDERS.clear();
+        MoreIconsAPI::SPIDERS.clear();
         SPIDER_INFO.clear();
-        SWINGS.clear();
+        MoreIconsAPI::SWINGS.clear();
         SWING_INFO.clear();
-        JETPACKS.clear();
+        MoreIconsAPI::JETPACKS.clear();
         JETPACK_INFO.clear();
-        TRAILS.clear();
+        MoreIconsAPI::TRAILS.clear();
         saveTrails();
         TRAIL_INFO.clear();
         removeSaved();
@@ -168,16 +118,16 @@ public:
     }
 
     static void restoreSaved() {
-        geode::Mod::get()->setSavedValue("icons", ICONS);
-        geode::Mod::get()->setSavedValue("ships", SHIPS);
-        geode::Mod::get()->setSavedValue("balls", BALLS);
-        geode::Mod::get()->setSavedValue("ufos", UFOS);
-        geode::Mod::get()->setSavedValue("waves", WAVES);
-        geode::Mod::get()->setSavedValue("robots", ROBOTS);
-        geode::Mod::get()->setSavedValue("spiders", SPIDERS);
-        geode::Mod::get()->setSavedValue("swings", SWINGS);
-        geode::Mod::get()->setSavedValue("jetpacks", JETPACKS);
-        geode::Mod::get()->setSavedValue("trails", TRAILS);
+        geode::Mod::get()->setSavedValue("icons", MoreIconsAPI::ICONS);
+        geode::Mod::get()->setSavedValue("ships", MoreIconsAPI::SHIPS);
+        geode::Mod::get()->setSavedValue("balls", MoreIconsAPI::BALLS);
+        geode::Mod::get()->setSavedValue("ufos", MoreIconsAPI::UFOS);
+        geode::Mod::get()->setSavedValue("waves", MoreIconsAPI::WAVES);
+        geode::Mod::get()->setSavedValue("robots", MoreIconsAPI::ROBOTS);
+        geode::Mod::get()->setSavedValue("spiders", MoreIconsAPI::SPIDERS);
+        geode::Mod::get()->setSavedValue("swings", MoreIconsAPI::SWINGS);
+        geode::Mod::get()->setSavedValue("jetpacks", MoreIconsAPI::JETPACKS);
+        geode::Mod::get()->setSavedValue("trails", MoreIconsAPI::TRAILS);
     }
 
     static void load(LoadingLayer*);
@@ -206,7 +156,7 @@ public:
     static void saveTrails() {
         for (auto& [trail, info] : TRAIL_INFO) {
             std::fstream file(std::filesystem::path(info.texture).replace_extension(".json"), std::ios::out);
-            file << matjson::Value(matjson::Object{
+            file << matjson::Value(matjson::Object {
                 { "blend", info.blend },
                 { "tint", info.tint },
             }).dump();
@@ -236,35 +186,6 @@ public:
         auto dualIcon = geode::Mod::get()->getSavedValue<std::string>(dualName, "");
         geode::Mod::get()->setSavedValue(name, dualIcon);
         geode::Mod::get()->setSavedValue(dualName, normalIcon);
-    }
-
-    static std::vector<std::string>& vectorForType(IconType type) {
-        switch (type) {
-            case IconType::Cube:
-                return ICONS;
-            case IconType::Ship:
-                return SHIPS;
-            case IconType::Ball:
-                return BALLS;
-            case IconType::Ufo:
-                return UFOS;
-            case IconType::Wave:
-                return WAVES;
-            case IconType::Robot:
-                return ROBOTS;
-            case IconType::Spider:
-                return SPIDERS;
-            case IconType::Swing:
-                return SWINGS;
-            case IconType::Jetpack:
-                return JETPACKS;
-            case IconType::Special:
-                return TRAILS;
-            default: {
-                static std::vector<std::string> empty;
-                return empty;
-            }
-        }
     }
 
     static std::unordered_map<std::string, TexturePack>& infoForType(IconType type) {
@@ -318,7 +239,7 @@ public:
     }
 
     static std::vector<std::string> getPage(IconType type, int page) {
-        auto& vec = vectorForType(type);
+        auto& vec = MoreIconsAPI::vectorForType(type);
         auto customPage = page - (GameManager::get()->countForType(type) + 35) / 36;
         if (vec.size() <= customPage * 36) return {};
         if (customPage < 0) return {};
@@ -326,7 +247,7 @@ public:
     }
 
     static int countForType(IconType type) {
-        return vectorForType(type).size() + ((GameManager::get()->countForType(type) + 35) / 36 * 36);
+        return MoreIconsAPI::vectorForType(type).size() + ((GameManager::get()->countForType(type) + 35) / 36 * 36);
     }
 
     static int wrapPage(IconType type, int page) {
@@ -336,7 +257,7 @@ public:
 
     static int findIconPage(IconType type) {
         auto active = (GameManager::get()->activeIconForType(type) - 1) / 36;
-        auto& vec = vectorForType(type);
+        auto& vec = MoreIconsAPI::vectorForType(type);
         auto savedType = savedForType(type);
         if (savedType.empty()) return active;
         auto it = std::find(vec.begin(), vec.end(), geode::Mod::get()->getSavedValue<std::string>(savedType, ""));
@@ -362,16 +283,16 @@ public:
                 "<cy>Swings</c>: {:L}\n"
                 "<cd>Jetpacks</c>: {:L}\n"
                 "<cb>Trails</c>: {:L}",
-                ICONS.size(),
-                SHIPS.size(),
-                BALLS.size(),
-                UFOS.size(),
-                WAVES.size(),
-                ROBOTS.size(),
-                SPIDERS.size(),
-                SWINGS.size(),
-                JETPACKS.size(),
-                TRAILS.size()
+                MoreIconsAPI::ICONS.size(),
+                MoreIconsAPI::SHIPS.size(),
+                MoreIconsAPI::BALLS.size(),
+                MoreIconsAPI::UFOS.size(),
+                MoreIconsAPI::WAVES.size(),
+                MoreIconsAPI::ROBOTS.size(),
+                MoreIconsAPI::SPIDERS.size(),
+                MoreIconsAPI::SWINGS.size(),
+                MoreIconsAPI::JETPACKS.size(),
+                MoreIconsAPI::TRAILS.size()
             ),
             "OK",
             folderButton ? "Folder" : nullptr,

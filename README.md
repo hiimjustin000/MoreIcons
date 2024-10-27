@@ -51,6 +51,23 @@ To use a custom icon, you will need to go into the icon kit. In the icon kit, th
 
 To deselect a custom icon, use the first row of dots to go back to the default icons, and click on one of the default icons to select it.
 
+## Mod Support
+Here are some examples of how to support More Icons in your mod.
+```cpp
+// Get the player's icon (The parameter is the gamemode or the gamemode plus "-dual" if Separate Dual Icons is enabled)
+Loader::get()->getLoadedMod("hiimjustin000.more_icons")->getSavedValue<std::string>("icon");
+// Get the list of icons (The parameter is the gamemode plus the letter "s")
+Loader::get()->getLoadedMod("hiimjustin000.more_icons")->getSavedValue<std::vector<std::string>>("icons");
+// Change a SimplePlayer to a custom icon
+DispatchEvent<SimplePlayer*, const std::string&, IconType>("hiimjustin000.more_icons/simple-player", simplePlayer, "my-icon", IconType::Icon).post();
+// Change a GJRobotSprite to a custom icon
+DispatchEvent<GJRobotSprite*, const std::string&>("hiimjustin000.more_icons/robot-sprite", robotSprite, "my-icon").post(); // Determines the icon type
+DispatchEvent<GJRobotSprite*, const std::string&, IconType>("hiimjustin000.more_icons/robot-sprite", robotSprite, "my-icon", IconType::Robot).post();
+// Change a PlayerObject to a custom icon
+DispatchEvent<PlayerObject*, const std::string&>("hiimjustin000.more_icons/player-object", playerObject, "my-icon").post(); // Determines the icon type
+DispatchEvent<PlayerObject*, const std::string&, IconType>("hiimjustin000.more_icons/player-object", playerObject, "my-icon", IconType::Icon).post();
+```
+
 ## Credits
 - [DeepResonanceX](https://gdbrowser.com/u/5668656) - Idea for the mod
 - [hiimjustin000](https://gdbrowser.com/u/7466002) - Creator of the mod

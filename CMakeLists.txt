@@ -4,10 +4,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(MoreIcons VERSION 1.3.4)
+project(MoreIcons VERSION 1.4.0)
 
 add_library(${PROJECT_NAME} SHARED
-    src/classes/DummyNode.cpp
+    src/api/MoreIconsAPI.cpp
     src/classes/LogCell.cpp
     src/classes/LogLayer.cpp
     src/hooks/AppDelegate.cpp

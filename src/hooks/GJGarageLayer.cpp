@@ -36,7 +36,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         }
 
         auto customIcon = Mod::get()->getSavedValue<std::string>("icon", "");
-        if (!customIcon.empty() && MoreIcons::hasIcon(customIcon)) setupCustomPage(MoreIcons::findIconPage(IconType::Cube));
+        if (!customIcon.empty() && MoreIconsAPI::hasIcon(customIcon, IconType::Cube)) setupCustomPage(MoreIcons::findIconPage(IconType::Cube));
         else createNavMenu();
 
         if (sdi) {
@@ -117,7 +117,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     void updatePlayerColors() {
         GJGarageLayer::updatePlayerColors();
 
-        if (m_iconSelection && m_fields->m_pageBar && !MoreIcons::vectorForType(m_iconType).empty()) m_iconSelection->setVisible(false);
+        if (m_iconSelection && m_fields->m_pageBar && !MoreIconsAPI::vectorForType(m_iconType).empty()) m_iconSelection->setVisible(false);
     }
 
     void createNavMenu() {
@@ -132,7 +132,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             addChild(f->m_navMenu, 1);
         }
 
-        auto& vec = MoreIcons::vectorForType(m_iconType);
+        auto& vec = MoreIconsAPI::vectorForType(m_iconType);
         m_navDotMenu->setPositionY(vec.empty() ? 25.0f : 35.0f);
         auto count = (GameManager::get()->countForType(m_iconType) + 35) / 36;
         if (count < 2) {
@@ -202,8 +202,8 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         auto f = m_fields.self();
         f->m_pages[m_iconType] = MoreIcons::wrapPage(m_iconType, f->m_pages[m_iconType] + tag);
         auto page = f->m_pages[m_iconType];
-        
-        auto& vec = MoreIcons::vectorForType(m_iconType);
+
+        auto& vec = MoreIconsAPI::vectorForType(m_iconType);
         switch (tag) {
             case -1: {
                 if (MoreIcons::isNormalPage(page, m_iconType)) {
@@ -244,7 +244,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             return;
         }
 
-        auto& vec = MoreIcons::vectorForType(m_iconType);
+        auto& vec = MoreIconsAPI::vectorForType(m_iconType);
         auto f = m_fields.self();
         if (f->m_pageBar) {
             f->m_pageBar->removeFromParent();
@@ -304,7 +304,20 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                 auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
                 if (Mod::get()->setSavedValue<std::string>(savedType, name) == name && selectedIconType == m_iconType) {
                     auto iconInfo = MoreIcons::infoForType(m_iconType)[name];
-                    auto popup = ItemInfoPopup::create(!iconInfo.id.empty() ? 447 : 1, unlockType);
+                    auto iconID = 1;
+                    if (!iconInfo.id.empty()) switch (m_iconType) {
+                        case IconType::Cube: iconID = 128; break;
+                        case IconType::Ship: iconID = 44; break;
+                        case IconType::Ball: iconID = 113; break;
+                        case IconType::Ufo: iconID = 95; break;
+                        case IconType::Wave: iconID = 75; break;
+                        case IconType::Robot: iconID = 51; break;
+                        case IconType::Spider: iconID = 18; break;
+                        case IconType::Swing: iconID = 7; break;
+                        case IconType::Jetpack: iconID = 5; break;
+                        default: break;
+                    }
+                    auto popup = ItemInfoPopup::create(iconID, unlockType);
                     if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
                         nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
                     if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
@@ -312,6 +325,8 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                         MoreIconsAPI::updateSimplePlayer(popupIcon->m_player, name, m_iconType);
                     if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
                         fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
+                    if (auto completionMenu = popup->m_mainLayer->getChildByID("completionMenu")) completionMenu->setVisible(false);
+                    if (auto infoButton = popup->m_buttonMenu->getChildByID("infoButton")) infoButton->setVisible(false);
                     if (!iconInfo.id.empty()) {
                         if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
                             return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
@@ -348,7 +363,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     }
 
     void setupCustomSpecialPage(int page) {
-        auto& vec = MoreIcons::vectorForType(m_iconType);
+        auto& vec = MoreIconsAPI::vectorForType(m_iconType);
         auto f = m_fields.self();
         if (f->m_pageBar) {
             f->m_pageBar->removeFromParent();
