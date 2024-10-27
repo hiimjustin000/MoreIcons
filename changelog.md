@@ -2,7 +2,7 @@
 ## v1.4.0 (2024-10-27)
 - Merged the More Icons API into the mod
 - Added support for events for other mods to use
-- Fixed texture pack credits only showing up for cubes ([[#14](https://github.com/hiimjustin000/MoreIcons/issues/14)])
+- Fixed texture pack credits only showing up for cubes ([#14](https://github.com/hiimjustin000/MoreIcons/issues/14))
 
 ## v1.3.4 (2024-10-21)
 - Moved some logic to More Icons API
