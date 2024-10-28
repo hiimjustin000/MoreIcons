@@ -411,7 +411,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                 auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
                 if (Mod::get()->setSavedValue<std::string>(savedType, name) == name && selectedIconType == m_iconType) {
                     auto trailInfo = MoreIcons::TRAIL_INFO[name];
-                    auto popup = ItemInfoPopup::create(!trailInfo.pack.id.empty() ? 447 : 1, !trailInfo.pack.id.empty() ? UnlockType::Cube : unlockType);
+                    auto popup = ItemInfoPopup::create(!trailInfo.pack.id.empty() ? 128 : 1, UnlockType::Cube);
                     if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
                         nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
                     if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
@@ -431,6 +431,8 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                     }
                     if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
                         fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
+                    if (auto completionMenu = popup->m_mainLayer->getChildByID("completionMenu")) completionMenu->setVisible(false);
+                    if (auto infoButton = popup->m_buttonMenu->getChildByID("infoButton")) infoButton->setVisible(false);
                     if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
                         return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
                     })) {
@@ -440,6 +442,24 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                         creditButton->setEnabled(false);
                         creditButton->updateSprite();
                     }
+                    if (auto p1Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                        if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
+                            if (auto p1Label = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(p1Label->getString(), "P1") == 0;
+                        }
+                        return false;
+                    })) p1Button->setVisible(false);
+                    if (auto p2Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                        if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
+                            if (auto p2Label = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(p2Label->getString(), "P2") == 0;
+                        }
+                        return false;
+                    })) p2Button->setVisible(false);
+                    if (auto gButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                        if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
+                            if (auto gLabel = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(gLabel->getString(), "G") == 0;
+                        }
+                        return false;
+                    })) gButton->setVisible(false);
                     auto blendToggler = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [this, name](CCMenuItemToggler* sender) {
                         MoreIcons::TRAIL_INFO[name].blend = !sender->isToggled();
                     });

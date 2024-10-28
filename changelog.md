@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.4.1 (2024-10-27)
+- Tweaked the trail info display in the icon kit
+
 ## v1.4.0 (2024-10-27)
 - Merged the More Icons API into the mod
 - Added support for events for other mods to use
