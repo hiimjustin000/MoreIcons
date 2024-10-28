@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.4.2 (2024-10-27)
+- Fixed a bug where the icon glow would be offset in the game
+
 ## v1.4.1 (2024-10-27)
 - Tweaked the trail info display in the icon kit
 

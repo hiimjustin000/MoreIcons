@@ -171,7 +171,6 @@ void MoreIconsAPI::updatePlayerObject(PlayerObject* object, const std::string& i
         object->m_birdVehicle->setPosition(firstCenter);
     }
     outlineSprite->setDisplayFrame(sfc->spriteFrameByName(iconFrameGlow.c_str()));
-    outlineSprite->setPosition(firstCenter);
     auto extraFrame = sfc->spriteFrameByName(iconFrameExtra.c_str());
     auto extraVisible = doesExist(extraFrame);
     detailSprite->setVisible(extraVisible);
