@@ -53,6 +53,16 @@ public:
         return frame && frame->getTag() != 105871529;
     }
 
+    static void setUserObject(cocos2d::CCNode* node, const std::string& value) {
+        if (!node || node->getUserObject("name"_spr)) return;
+        node->setUserObject("name"_spr, cocos2d::CCString::create(value));
+    }
+
+    static void removeUserObject(cocos2d::CCNode* node) {
+        if (!node) return;
+        node->setUserObject("name"_spr, nullptr);
+    }
+
     static std::vector<std::string>& vectorForType(IconType type);
 
     static std::string savedForType(IconType type, bool dual);

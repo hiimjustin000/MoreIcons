@@ -41,6 +41,8 @@ std::string MoreIconsAPI::savedForType(IconType type, bool dual) {
 void MoreIconsAPI::updateSimplePlayer(SimplePlayer* player, const std::string& icon, IconType type) {
     if (!player || icon.empty() || !hasIcon(icon, type)) return;
 
+    MoreIconsAPI::setUserObject(player, icon);
+
     if (type == IconType::Robot) {
         updateRobotSprite(player->m_robotSprite, icon, type);
         return;
@@ -78,6 +80,8 @@ void MoreIconsAPI::updateSimplePlayer(SimplePlayer* player, const std::string& i
 
 void MoreIconsAPI::updateRobotSprite(GJRobotSprite* sprite, const std::string& icon, IconType type) {
     if (!sprite || icon.empty() || !hasIcon(icon, type)) return;
+
+    MoreIconsAPI::setUserObject(sprite, icon);
 
     sprite->setBatchNode(nullptr);
     sprite->m_paSprite->setBatchNode(nullptr);
@@ -126,6 +130,8 @@ void MoreIconsAPI::updateRobotSprite(GJRobotSprite* sprite, const std::string& i
 
 void MoreIconsAPI::updatePlayerObject(PlayerObject* object, const std::string& icon, IconType type) {
     if (!object || icon.empty() || !hasIcon(icon, type)) return;
+
+    MoreIconsAPI::setUserObject(object, icon);
 
     if (type == IconType::Robot || type == IconType::Spider) {
         auto robotSprite = type == IconType::Robot ? object->m_robotSprite : object->m_spiderSprite;

@@ -80,6 +80,13 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     }
 
     void onSelect(CCObject* sender) {
+        auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
+        if (btn->getUserObject("name"_spr)) {
+            if (m_iconType == IconType::Special) onCustomSpecialSelect(btn);
+            else onCustomSelect(btn);
+            return;
+        }
+
         GJGarageLayer::onSelect(sender);
 
         auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
@@ -155,14 +162,13 @@ class $modify(MIGarageLayer, GJGarageLayer) {
 
         f->m_navMenu->removeAllChildren();
         auto navDotAmount = (vec.size() + 35) / 36;
-        for (int i = 0; i < navDotAmount; i++) {
-            auto page = count + i;
+        for (int i = count; i < navDotAmount + count; i++) {
             auto pages = f->m_pages;
-            auto dot = CCMenuItemExt::createSpriteExtraWithFrameName(
-                pages.contains(m_iconType) && page == pages[m_iconType] ? "gj_navDotBtn_on_001.png" : "gj_navDotBtn_off_001.png",
-                0.9f,
-                [this, page](auto) { setupCustomPage(page); }
-            );
+            auto dotSprite = CCSprite::createWithSpriteFrameName(
+                pages.contains(m_iconType) && i == pages[m_iconType] ? "gj_navDotBtn_on_001.png" : "gj_navDotBtn_off_001.png");
+            dotSprite->setScale(0.9f);
+            auto dot = CCMenuItemSpriteExtra::create(dotSprite, this, menu_selector(MIGarageLayer::onCustomNavigate));
+            dot->setTag(i);
             dot->setSizeMult(1.1f);
             f->m_navMenu->addChild(dot);
         }
@@ -186,6 +192,10 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         m_fields->m_pages[m_iconType] = sender->getTag();
 
         createNavMenu();
+    }
+
+    void onCustomNavigate(CCObject* sender) {
+        setupCustomPage(sender->getTag());
     }
 
     void onArrow(CCObject* sender) {
@@ -260,10 +270,10 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         f->m_pages[m_iconType] = MoreIcons::wrapPage(m_iconType, page);
         createNavMenu();
 
-        auto iconType = GameManager::get()->m_playerIconType;
+        auto gameManager = GameManager::get();
+        auto iconType = gameManager->m_playerIconType;
         MoreIconsAPI::updateSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(iconType, false), ""), iconType);
-        auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
-        if (sdi) {
+        if (auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons")) {
             auto lastmode = (IconType)sdi->getSavedValue("lastmode", 0);
             MoreIconsAPI::updateSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
                 Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(lastmode, true), ""), lastmode);
@@ -274,14 +284,11 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             static_cast<CCSprite*>(navDot->getNormalImage())->setDisplayFrame(spriteFrameCache->spriteFrameByName("gj_navDotBtn_off_001.png"));
         }
 
-        auto winSize = CCDirector::get()->getWinSize();
-        auto gameManager = GameManager::get();
         auto unlockType = gameManager->iconTypeToUnlockType(m_iconType);
         auto playerSquare = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
         auto objs = CCArray::create();
         CCMenuItemSpriteExtra* current = nullptr;
         auto savedType = MoreIcons::savedForType(m_iconType);
-        auto dual = sdi && sdi->getSavedValue("2pselected", false);
         int i = 1;
         auto hasAnimProf = Loader::get()->isModLoaded("thesillydoggo.animatedprofiles");
         for (auto name : MoreIcons::getPage(m_iconType, f->m_pages[m_iconType])) {
@@ -292,60 +299,8 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                 if (auto robotSprite = itemIcon->m_player->m_robotSprite) robotSprite->runAnimation("idle01");
                 if (auto spiderSprite = itemIcon->m_player->m_spiderSprite) spiderSprite->runAnimation("idle01");
             }
-            auto iconButton = CCMenuItemExt::createSpriteExtra(itemIcon, [this, f, name, sdi, dual, savedType, gameManager, unlockType](CCMenuItemSpriteExtra* sender) {
-                m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
-                m_cursor1->setVisible(true);
-                auto player = dual ? static_cast<SimplePlayer*>(getChildByID("player2-icon")) : m_playerObject;
-                player->updatePlayerFrame(1, m_iconType);
-                player->updateColors();
-                MoreIconsAPI::updateSimplePlayer(player, name, m_iconType);
-                if (!dual) gameManager->m_playerIconType = m_iconType;
-                player->setScale(m_iconType == IconType::Jetpack ? 1.5f : 1.6f);
-                auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
-                if (Mod::get()->setSavedValue<std::string>(savedType, name) == name && selectedIconType == m_iconType) {
-                    auto iconInfo = MoreIcons::infoForType(m_iconType)[name];
-                    auto iconID = 1;
-                    if (!iconInfo.id.empty()) switch (m_iconType) {
-                        case IconType::Cube: iconID = 128; break;
-                        case IconType::Ship: iconID = 44; break;
-                        case IconType::Ball: iconID = 113; break;
-                        case IconType::Ufo: iconID = 95; break;
-                        case IconType::Wave: iconID = 75; break;
-                        case IconType::Robot: iconID = 51; break;
-                        case IconType::Spider: iconID = 18; break;
-                        case IconType::Swing: iconID = 7; break;
-                        case IconType::Jetpack: iconID = 5; break;
-                        default: break;
-                    }
-                    auto popup = ItemInfoPopup::create(iconID, unlockType);
-                    if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
-                        nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
-                    if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
-                    if (auto popupIcon = findFirstChildRecursive<GJItemIcon>(popup->m_mainLayer, [](auto) { return true; }))
-                        MoreIconsAPI::updateSimplePlayer(popupIcon->m_player, name, m_iconType);
-                    if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
-                        fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
-                    if (auto completionMenu = popup->m_mainLayer->getChildByID("completionMenu")) completionMenu->setVisible(false);
-                    if (auto infoButton = popup->m_buttonMenu->getChildByID("infoButton")) infoButton->setVisible(false);
-                    if (!iconInfo.id.empty()) {
-                        if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
-                            return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
-                        })) {
-                            auto creditText = static_cast<CCLabelBMFont*>(creditButton->getNormalImage());
-                            creditText->setString(iconInfo.name.c_str());
-                            creditText->limitLabelWidth(100.0f, 0.5f, 0.0f);
-                            creditButton->setEnabled(false);
-                            creditButton->updateSprite();
-                        }
-                    }
-                    popup->show();
-                }
-                if (dual) {
-                    sdi->setSavedValue("lastmode", (int)m_iconType);
-                    sdi->setSavedValue("lasttype", (int)m_iconType);
-                }
-                else m_selectedIconType = m_iconType;
-            });
+            auto iconButton = CCMenuItemSpriteExtra::create(itemIcon, this, menu_selector(GJGarageLayer::onSelect));
+            iconButton->setUserObject("name"_spr, CCString::create(name));
             iconButton->setContentSize(playerSquare->getContentSize());
             itemIcon->setPosition(iconButton->getContentSize() / 2);
             iconButton->setTag(i++);
@@ -353,13 +308,73 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             if (name == Mod::get()->getSavedValue<std::string>(savedType, "")) current = iconButton;
         }
 
-        f->m_pageBar = ListButtonBar::create(objs, winSize / 2 - CCPoint { 0.0f, 65.0f }, 12, 3, 5.0f, 5.0f, 25.0f, 220.0f, 1);
+        f->m_pageBar = ListButtonBar::create(objs, CCDirector::get()->getWinSize() / 2 - CCPoint { 0.0f, 65.0f }, 12, 3, 5.0f, 5.0f, 25.0f, 220.0f, 1);
         f->m_pageBar->m_scrollLayer->togglePageIndicators(false);
         f->m_pageBar->setID("icon-selection-bar"_spr);
         addChild(f->m_pageBar, 101);
 
         m_cursor1->setVisible(current != nullptr);
         if (current) m_cursor1->setPosition(current->getParent()->convertToWorldSpace(current->getPosition()));
+    }
+
+    void onCustomSelect(CCMenuItemSpriteExtra* sender) {
+        auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
+        auto dual = sdi && sdi->getSavedValue("2pselected", false);
+        std::string name = static_cast<CCString*>(sender->getUserObject("name"_spr))->getCString();
+
+        m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
+        m_cursor1->setVisible(true);
+        auto player = dual ? static_cast<SimplePlayer*>(getChildByID("player2-icon")) : m_playerObject;
+        player->updatePlayerFrame(1, m_iconType);
+        player->updateColors();
+        MoreIconsAPI::updateSimplePlayer(player, name, m_iconType);
+        if (!dual) GameManager::get()->m_playerIconType = m_iconType;
+        player->setScale(m_iconType == IconType::Jetpack ? 1.5f : 1.6f);
+        auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
+        if (Mod::get()->setSavedValue<std::string>(MoreIcons::savedForType(m_iconType), name) == name && selectedIconType == m_iconType) {
+            auto iconInfo = MoreIcons::infoForType(m_iconType)[name];
+            auto iconID = 1;
+            if (!iconInfo.id.empty()) switch (m_iconType) {
+                case IconType::Cube: iconID = 128; break;
+                case IconType::Ship: iconID = 44; break;
+                case IconType::Ball: iconID = 113; break;
+                case IconType::Ufo: iconID = 95; break;
+                case IconType::Wave: iconID = 75; break;
+                case IconType::Robot: iconID = 51; break;
+                case IconType::Spider: iconID = 18; break;
+                case IconType::Swing: iconID = 7; break;
+                case IconType::Jetpack: iconID = 5; break;
+                default: break;
+            }
+            auto unlockType = GameManager::get()->iconTypeToUnlockType(m_iconType);
+            auto popup = ItemInfoPopup::create(iconID, unlockType);
+            if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
+                nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
+            if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
+            if (auto popupIcon = findFirstChildRecursive<GJItemIcon>(popup->m_mainLayer, [](auto) { return true; }))
+                MoreIconsAPI::updateSimplePlayer(popupIcon->m_player, name, m_iconType);
+            if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
+                fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
+            if (auto completionMenu = popup->m_mainLayer->getChildByID("completionMenu")) completionMenu->setVisible(false);
+            if (auto infoButton = popup->m_buttonMenu->getChildByID("infoButton")) infoButton->setVisible(false);
+            if (!iconInfo.id.empty()) {
+                if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                    return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
+                })) {
+                    auto creditText = static_cast<CCLabelBMFont*>(creditButton->getNormalImage());
+                    creditText->setString(iconInfo.name.c_str());
+                    creditText->limitLabelWidth(100.0f, 0.5f, 0.0f);
+                    creditButton->setEnabled(false);
+                    creditButton->updateSprite();
+                }
+            }
+            popup->show();
+        }
+        if (dual) {
+            sdi->setSavedValue("lastmode", (int)m_iconType);
+            sdi->setSavedValue("lasttype", (int)m_iconType);
+        }
+        else m_selectedIconType = m_iconType;
     }
 
     void setupCustomSpecialPage(int page) {
@@ -387,13 +402,9 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             static_cast<CCSprite*>(navDot->getNormalImage())->setDisplayFrame(spriteFrameCache->spriteFrameByName("gj_navDotBtn_off_001.png"));
         }
 
-        auto winSize = CCDirector::get()->getWinSize();
-        auto unlockType = GameManager::get()->iconTypeToUnlockType(m_iconType);
         auto objs = CCArray::create();
         CCMenuItemSpriteExtra* current = nullptr;
         auto savedType = MoreIcons::savedForType(m_iconType);
-        auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
-        auto dual = sdi && sdi->getSavedValue("2pselected", false);
         int i = 1;
         for (auto name : MoreIcons::getPage(m_iconType, f->m_pages[m_iconType])) {
             auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
@@ -405,98 +416,14 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             square->addChild(streak);
             streak->setPosition(square->getContentSize() / 2);
             square->setScale(0.8f);
-            auto iconButton = CCMenuItemExt::createSpriteExtra(square, [this, name, texture, winSize, sdi, dual, savedType, unlockType](CCMenuItemSpriteExtra* sender) {
-                m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
-                m_cursor1->setVisible(true);
-                auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
-                if (Mod::get()->setSavedValue<std::string>(savedType, name) == name && selectedIconType == m_iconType) {
-                    auto trailInfo = MoreIcons::TRAIL_INFO[name];
-                    auto popup = ItemInfoPopup::create(!trailInfo.pack.id.empty() ? 128 : 1, UnlockType::Cube);
-                    if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
-                        nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
-                    if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
-                    if (auto popupIcon = getChildOfType<GJItemIcon>(popup->m_mainLayer, 0)) {
-                        popupIcon->setVisible(false);
-                        auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
-                        square->setColor({ 150, 150, 150 });
-                        auto streak = CCSprite::createWithTexture(texture);
-                        limitNodeHeight(streak, 27.0f, 999.0f, 0.001f);
-                        streak->setRotation(-90.0f);
-                        square->addChild(streak);
-                        streak->setPosition(square->getContentSize() / 2);
-                        square->setPosition(popupIcon->getPosition());
-                        square->setScale(popupIcon->getScale());
-                        square->setID("trail-square"_spr);
-                        popup->m_mainLayer->addChild(square);
-                    }
-                    if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
-                        fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
-                    if (auto completionMenu = popup->m_mainLayer->getChildByID("completionMenu")) completionMenu->setVisible(false);
-                    if (auto infoButton = popup->m_buttonMenu->getChildByID("infoButton")) infoButton->setVisible(false);
-                    if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
-                        return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
-                    })) {
-                        auto creditText = static_cast<CCLabelBMFont*>(creditButton->getNormalImage());
-                        creditText->setString(trailInfo.pack.name.c_str());
-                        creditText->limitLabelWidth(100.0f, 0.5f, 0.0f);
-                        creditButton->setEnabled(false);
-                        creditButton->updateSprite();
-                    }
-                    if (auto p1Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
-                        if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
-                            if (auto p1Label = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(p1Label->getString(), "P1") == 0;
-                        }
-                        return false;
-                    })) p1Button->setVisible(false);
-                    if (auto p2Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
-                        if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
-                            if (auto p2Label = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(p2Label->getString(), "P2") == 0;
-                        }
-                        return false;
-                    })) p2Button->setVisible(false);
-                    if (auto gButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
-                        if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
-                            if (auto gLabel = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(gLabel->getString(), "G") == 0;
-                        }
-                        return false;
-                    })) gButton->setVisible(false);
-                    auto blendToggler = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [this, name](CCMenuItemToggler* sender) {
-                        MoreIcons::TRAIL_INFO[name].blend = !sender->isToggled();
-                    });
-                    blendToggler->setPosition(popup->m_buttonMenu->convertToNodeSpace(winSize / 2 - CCPoint { 123.0f, 78.0f }));
-                    blendToggler->toggle(trailInfo.blend);
-                    blendToggler->setID("blend-toggler"_spr);
-                    popup->m_buttonMenu->addChild(blendToggler);
-                    auto blendLabel = CCLabelBMFont::create("Blend", "bigFont.fnt");
-                    blendLabel->setPosition(winSize / 2 - CCPoint { 112.0f, 78.0f });
-                    blendLabel->setAnchorPoint({ 0.0f, 0.5f });
-                    blendLabel->setScale(0.3f);
-                    blendLabel->setID("blend-label"_spr);
-                    popup->m_mainLayer->addChild(blendLabel);
-                    auto tintToggler = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [this, name](CCMenuItemToggler* sender) {
-                        MoreIcons::TRAIL_INFO[name].tint = !sender->isToggled();
-                    });
-                    tintToggler->setPosition(popup->m_buttonMenu->convertToNodeSpace(winSize / 2 - CCPoint { 123.0f, 98.0f }));
-                    tintToggler->toggle(trailInfo.tint);
-                    tintToggler->setID("tint-toggler"_spr);
-                    popup->m_buttonMenu->addChild(tintToggler);
-                    auto tintLabel = CCLabelBMFont::create("Tint", "bigFont.fnt");
-                    tintLabel->setPosition(winSize / 2 - CCPoint { 112.0f, 98.0f });
-                    tintLabel->setAnchorPoint({ 0.0f, 0.5f });
-                    tintLabel->setScale(0.3f);
-                    tintLabel->setID("tint-label"_spr);
-                    popup->m_mainLayer->addChild(tintLabel);
-                    popup->show();
-                }
-                if (dual) sdi->setSavedValue("lasttype", (int)m_iconType);
-                else m_selectedIconType = m_iconType;
-            });
+            auto iconButton = CCMenuItemSpriteExtra::create(square, this, menu_selector(GJGarageLayer::onSelect));
+            iconButton->setUserObject("name"_spr, CCString::create(name));
             iconButton->setTag(i++);
             objs->addObject(iconButton);
             if (name == Mod::get()->getSavedValue<std::string>(savedType, "")) current = iconButton;
         }
 
-        f->m_pageBar = ListButtonBar::create(objs, winSize / 2 - CCPoint { 0.0f, 65.0f }, 12, 3, 5.0f, 5.0f, 25.0f, 220.0f, 1);
+        f->m_pageBar = ListButtonBar::create(objs, CCDirector::get()->getWinSize() / 2 - CCPoint { 0.0f, 65.0f }, 12, 3, 5.0f, 5.0f, 25.0f, 220.0f, 1);
         f->m_pageBar->m_scrollLayer->togglePageIndicators(false);
         f->m_pageBar->setID("icon-selection-bar"_spr);
         addChild(f->m_pageBar, 101);
@@ -504,5 +431,97 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         m_cursor1->setVisible(current != nullptr);
         if (current) m_cursor1->setPosition(current->getParent()->convertToWorldSpace(current->getPosition()));
         m_cursor2->setVisible(false);
+    }
+
+    void onCustomSpecialSelect(CCMenuItemSpriteExtra* sender) {
+        auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
+        auto dual = sdi && sdi->getSavedValue("2pselected", false);
+        std::string name = static_cast<CCString*>(sender->getUserObject("name"_spr))->getCString();
+
+        m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
+        m_cursor1->setVisible(true);
+        auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
+        if (Mod::get()->setSavedValue<std::string>(MoreIcons::savedForType(m_iconType), name) == name && selectedIconType == m_iconType) {
+            auto trailInfo = MoreIcons::TRAIL_INFO[name];
+            auto popup = ItemInfoPopup::create(!trailInfo.pack.id.empty() ? 128 : 1, UnlockType::Cube);
+            if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
+                nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
+            if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
+            if (auto popupIcon = getChildOfType<GJItemIcon>(popup->m_mainLayer, 0)) {
+                popupIcon->setVisible(false);
+                auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
+                square->setColor({ 150, 150, 150 });
+                auto streak = CCSprite::createWithTexture(CCTextureCache::get()->textureForKey(MoreIcons::TRAIL_INFO[name].texture.c_str()));
+                limitNodeHeight(streak, 27.0f, 999.0f, 0.001f);
+                streak->setRotation(-90.0f);
+                square->addChild(streak);
+                streak->setPosition(square->getContentSize() / 2);
+                square->setPosition(popupIcon->getPosition());
+                square->setScale(popupIcon->getScale());
+                square->setID("trail-square"_spr);
+                popup->m_mainLayer->addChild(square);
+            }
+            if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
+                fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, UnlockType::Streak))));
+            if (auto completionMenu = popup->m_mainLayer->getChildByID("completionMenu")) completionMenu->setVisible(false);
+            if (auto infoButton = popup->m_buttonMenu->getChildByID("infoButton")) infoButton->setVisible(false);
+            if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
+            })) {
+                auto creditText = static_cast<CCLabelBMFont*>(creditButton->getNormalImage());
+                creditText->setString(trailInfo.pack.name.c_str());
+                creditText->limitLabelWidth(100.0f, 0.5f, 0.0f);
+                creditButton->setEnabled(false);
+                creditButton->updateSprite();
+            }
+            if (auto p1Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
+                    if (auto p1Label = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(p1Label->getString(), "P1") == 0;
+                }
+                return false;
+            })) p1Button->setVisible(false);
+            if (auto p2Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
+                    if (auto p2Label = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(p2Label->getString(), "P2") == 0;
+                }
+                return false;
+            })) p2Button->setVisible(false);
+            if (auto gButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
+                    if (auto gLabel = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(gLabel->getString(), "G") == 0;
+                }
+                return false;
+            })) gButton->setVisible(false);
+            auto winSize = CCDirector::get()->getWinSize();
+            auto blendToggler = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [this, name](CCMenuItemToggler* sender) {
+                MoreIcons::TRAIL_INFO[name].blend = !sender->isToggled();
+            });
+            blendToggler->setPosition(popup->m_buttonMenu->convertToNodeSpace(winSize / 2 - CCPoint { 123.0f, 78.0f }));
+            blendToggler->toggle(trailInfo.blend);
+            blendToggler->setID("blend-toggler"_spr);
+            popup->m_buttonMenu->addChild(blendToggler);
+            auto blendLabel = CCLabelBMFont::create("Blend", "bigFont.fnt");
+            blendLabel->setPosition(winSize / 2 - CCPoint { 112.0f, 78.0f });
+            blendLabel->setAnchorPoint({ 0.0f, 0.5f });
+            blendLabel->setScale(0.3f);
+            blendLabel->setID("blend-label"_spr);
+            popup->m_mainLayer->addChild(blendLabel);
+            auto tintToggler = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [this, name](CCMenuItemToggler* sender) {
+                MoreIcons::TRAIL_INFO[name].tint = !sender->isToggled();
+            });
+            tintToggler->setPosition(popup->m_buttonMenu->convertToNodeSpace(winSize / 2 - CCPoint { 123.0f, 98.0f }));
+            tintToggler->toggle(trailInfo.tint);
+            tintToggler->setID("tint-toggler"_spr);
+            popup->m_buttonMenu->addChild(tintToggler);
+            auto tintLabel = CCLabelBMFont::create("Tint", "bigFont.fnt");
+            tintLabel->setPosition(winSize / 2 - CCPoint { 112.0f, 98.0f });
+            tintLabel->setAnchorPoint({ 0.0f, 0.5f });
+            tintLabel->setScale(0.3f);
+            tintLabel->setID("tint-label"_spr);
+            popup->m_mainLayer->addChild(tintLabel);
+            popup->show();
+        }
+        if (dual) sdi->setSavedValue("lasttype", (int)m_iconType);
+        else m_selectedIconType = m_iconType;
     }
 };
