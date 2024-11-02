@@ -348,12 +348,12 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             }
             auto unlockType = GameManager::get()->iconTypeToUnlockType(m_iconType);
             auto popup = ItemInfoPopup::create(iconID, unlockType);
-            if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
+            if (auto nameLabel = popup->m_mainLayer->getChildByType<CCLabelBMFont>(0))
                 nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
-            if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
+            if (auto achLabel = popup->m_mainLayer->getChildByType<CCLabelBMFont>(1)) achLabel->setString("Custom");
             if (auto popupIcon = findFirstChildRecursive<GJItemIcon>(popup->m_mainLayer, [](auto) { return true; }))
                 MoreIconsAPI::updateSimplePlayer(popupIcon->m_player, name, m_iconType);
-            if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
+            if (auto descText = popup->m_mainLayer->getChildByType<TextArea>(0)) descText->setString(
                 fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, unlockType))));
             if (auto completionMenu = popup->m_mainLayer->getChildByID("completionMenu")) completionMenu->setVisible(false);
             if (auto infoButton = popup->m_buttonMenu->getChildByID("infoButton")) infoButton->setVisible(false);
@@ -444,10 +444,10 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         if (Mod::get()->setSavedValue<std::string>(MoreIcons::savedForType(m_iconType), name) == name && selectedIconType == m_iconType) {
             auto trailInfo = MoreIcons::TRAIL_INFO[name];
             auto popup = ItemInfoPopup::create(!trailInfo.pack.id.empty() ? 128 : 1, UnlockType::Cube);
-            if (auto nameLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 0))
+            if (auto nameLabel = popup->m_mainLayer->getChildByType<CCLabelBMFont>(0))
                 nameLabel->setString(name.substr(name.find_first_of(':') + 1).c_str());
-            if (auto achLabel = getChildOfType<CCLabelBMFont>(popup->m_mainLayer, 1)) achLabel->setString("Custom");
-            if (auto popupIcon = getChildOfType<GJItemIcon>(popup->m_mainLayer, 0)) {
+            if (auto achLabel = popup->m_mainLayer->getChildByType<CCLabelBMFont>(1)) achLabel->setString("Custom");
+            if (auto popupIcon = popup->m_mainLayer->getChildByType<GJItemIcon>(0)) {
                 popupIcon->setVisible(false);
                 auto square = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
                 square->setColor({ 150, 150, 150 });
@@ -461,7 +461,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                 square->setID("trail-square"_spr);
                 popup->m_mainLayer->addChild(square);
             }
-            if (auto descText = getChildOfType<TextArea>(popup->m_mainLayer, 0)) descText->setString(
+            if (auto descText = popup->m_mainLayer->getChildByType<TextArea>(0)) descText->setString(
                 fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, UnlockType::Streak))));
             if (auto completionMenu = popup->m_mainLayer->getChildByID("completionMenu")) completionMenu->setVisible(false);
             if (auto infoButton = popup->m_buttonMenu->getChildByID("infoButton")) infoButton->setVisible(false);
@@ -476,19 +476,19 @@ class $modify(MIGarageLayer, GJGarageLayer) {
             }
             if (auto p1Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
                 if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
-                    if (auto p1Label = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(p1Label->getString(), "P1") == 0;
+                    if (auto p1Label = normalImage->getChildByType<CCLabelBMFont>(0)) return strcmp(p1Label->getString(), "P1") == 0;
                 }
                 return false;
             })) p1Button->setVisible(false);
             if (auto p2Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
                 if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
-                    if (auto p2Label = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(p2Label->getString(), "P2") == 0;
+                    if (auto p2Label = normalImage->getChildByType<CCLabelBMFont>(0)) return strcmp(p2Label->getString(), "P2") == 0;
                 }
                 return false;
             })) p2Button->setVisible(false);
             if (auto gButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
                 if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
-                    if (auto gLabel = getChildOfType<CCLabelBMFont>(normalImage, 0)) return strcmp(gLabel->getString(), "G") == 0;
+                    if (auto gLabel = normalImage->getChildByType<CCLabelBMFont>(0)) return strcmp(gLabel->getString(), "G") == 0;
                 }
                 return false;
             })) gButton->setVisible(false);

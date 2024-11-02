@@ -3,11 +3,11 @@
 
 using namespace geode::prelude;
 
-using SimplePlayerFilter = DispatchFilter<SimplePlayer*, const std::string&, IconType>;
-using RobotSpriteFilter = DispatchFilter<GJRobotSprite*, const std::string&>;
-using RobotSpriteTypeFilter = DispatchFilter<GJRobotSprite*, const std::string&, IconType>;
-using PlayerObjectFilter = DispatchFilter<PlayerObject*, const std::string&>;
-using PlayerObjectTypeFilter = DispatchFilter<PlayerObject*, const std::string&, IconType>;
+using SimplePlayerFilter = DispatchFilter<SimplePlayer*, std::string, IconType>;
+using RobotSpriteFilter = DispatchFilter<GJRobotSprite*, std::string>;
+using RobotSpriteTypeFilter = DispatchFilter<GJRobotSprite*, std::string, IconType>;
+using PlayerObjectFilter = DispatchFilter<PlayerObject*, std::string>;
+using PlayerObjectTypeFilter = DispatchFilter<PlayerObject*, std::string, IconType>;
 
 $execute {
     new EventListener<SimplePlayerFilter>(+[](SimplePlayer* player, const std::string& icon, IconType type) {

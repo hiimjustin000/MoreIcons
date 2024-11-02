@@ -24,23 +24,15 @@ class $modify(MIProfilePage, ProfilePage) {
         auto playerMenu = m_mainLayer->getChildByID("player-menu");
         if (!playerMenu) return;
 
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-icon"), 0), IconType::Cube);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-ship"), 0), IconType::Ship);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-ball"), 0), IconType::Ball);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-ufo"), 0), IconType::Ufo);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-wave"), 0), IconType::Wave);
-        if (Loader::get()->isModLoaded("thesillydoggo.animatedprofiles") && !Loader::get()->isModLoaded("rynat.better_unlock_info")) {
-            MoreIcons::changeSimplePlayer(
-                getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-robot")->getChildByID("player-robot"), 0), IconType::Robot);
-            MoreIcons::changeSimplePlayer(
-                getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-spider")->getChildByID("player-spider"), 0), IconType::Spider);
-        } else {
-            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-robot"), 0), IconType::Robot);
-            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-spider"), 0), IconType::Spider);
-        }
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-swing"), 0), IconType::Swing);
-        if (auto playerJetpack = playerMenu->getChildByID("player-jetpack"))
-            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerJetpack, 0), IconType::Jetpack);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-icon")), IconType::Cube);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-ship")), IconType::Ship);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-ball")), IconType::Ball);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-ufo")), IconType::Ufo);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-wave")), IconType::Wave);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-robot")), IconType::Robot);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-spider")), IconType::Spider);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-swing")), IconType::Swing);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-jetpack")), IconType::Jetpack);
 
         if (Loader::get()->isModLoaded("weebify.separate_dual_icons")) {
             auto twoPToggler = static_cast<CCMenuItemSpriteExtra*>(m_mainLayer->getChildByID("left-menu")->getChildByID("2p-toggler"));
@@ -62,23 +54,15 @@ class $modify(MIProfilePage, ProfilePage) {
         auto f = m_fields.self();
         (f->m_originalSDIToggleTarget->*f->m_originalSDIToggle)(sender);
         auto playerMenu = m_mainLayer->getChildByID("player-menu");
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-icon"), 0), IconType::Cube);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-ship"), 0), IconType::Ship);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-ball"), 0), IconType::Ball);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-ufo"), 0), IconType::Ufo);
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-wave"), 0), IconType::Wave);
-        if (Loader::get()->isModLoaded("thesillydoggo.animatedprofiles") && !Loader::get()->isModLoaded("rynat.better_unlock_info")) {
-            MoreIcons::changeSimplePlayer(
-                getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-robot")->getChildByID("player-robot"), 0), IconType::Robot);
-            MoreIcons::changeSimplePlayer(
-                getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-spider")->getChildByID("player-spider"), 0), IconType::Spider);
-        } else {
-            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-robot"), 0), IconType::Robot);
-            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-spider"), 0), IconType::Spider);
-        }
-        MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerMenu->getChildByID("player-swing"), 0), IconType::Swing);
-        if (auto playerJetpack = playerMenu->getChildByID("player-jetpack"))
-            MoreIcons::changeSimplePlayer(getChildOfType<SimplePlayer>(playerJetpack, 0), IconType::Jetpack);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-icon")), IconType::Cube);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-ship")), IconType::Ship);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-ball")), IconType::Ball);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-ufo")), IconType::Ufo);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-wave")), IconType::Wave);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-robot")), IconType::Robot);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-spider")), IconType::Spider);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-swing")), IconType::Swing);
+        MoreIcons::changeSimplePlayer(MoreIcons::findPlayer(playerMenu->getChildByID("player-jetpack")), IconType::Jetpack);
     }
 
     void toggleShip(CCObject* sender) {

@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.4.4 (2024-11-02)
+- Fixed events not working properly
+
 ## v1.4.3 (2024-10-29)
 - Tweaked the icon kit functionality
 - Added user objects for custom icons

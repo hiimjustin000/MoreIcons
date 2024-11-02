@@ -238,6 +238,11 @@ public:
         return name;
     }
 
+    static SimplePlayer* findPlayer(cocos2d::CCNode* node) {
+        if (!node) return nullptr;
+        return geode::cocos::findFirstChildRecursive<SimplePlayer>(node, [](auto) { return true; });
+    }
+
     static std::vector<std::string> getPage(IconType type, int page) {
         auto& vec = MoreIconsAPI::vectorForType(type);
         auto customPage = page - (GameManager::get()->countForType(type) + 35) / 36;

@@ -56,16 +56,21 @@ Here are some examples of how to support More Icons in your mod.
 ```cpp
 // Get the player's icon (The parameter is the gamemode or the gamemode plus "-dual" if Separate Dual Icons is enabled)
 Loader::get()->getLoadedMod("hiimjustin000.more_icons")->getSavedValue<std::string>("icon");
+
 // Get the list of icons (The parameter is the gamemode plus the letter "s")
 Loader::get()->getLoadedMod("hiimjustin000.more_icons")->getSavedValue<std::vector<std::string>>("icons");
+
 // Change a SimplePlayer to a custom icon
-DispatchEvent<SimplePlayer*, const std::string&, IconType>("hiimjustin000.more_icons/simple-player", simplePlayer, "my-icon", IconType::Icon).post();
+DispatchEvent<SimplePlayer*, std::string, IconType>("hiimjustin000.more_icons/simple-player", simplePlayer, "my-icon", IconType::Cube).post();
+
 // Change a GJRobotSprite to a custom icon
-DispatchEvent<GJRobotSprite*, const std::string&>("hiimjustin000.more_icons/robot-sprite", robotSprite, "my-icon").post(); // Determines the icon type
-DispatchEvent<GJRobotSprite*, const std::string&, IconType>("hiimjustin000.more_icons/robot-sprite", robotSprite, "my-icon", IconType::Robot).post();
+DispatchEvent<GJRobotSprite*, std::string>("hiimjustin000.more_icons/robot-sprite", robotSprite, "my-icon").post(); // Determines the icon type
+
+DispatchEvent<GJRobotSprite*, std::string, IconType>("hiimjustin000.more_icons/robot-sprite", robotSprite, "my-icon", IconType::Robot).post();
+
 // Change a PlayerObject to a custom icon
-DispatchEvent<PlayerObject*, const std::string&>("hiimjustin000.more_icons/player-object", playerObject, "my-icon").post(); // Determines the icon type
-DispatchEvent<PlayerObject*, const std::string&, IconType>("hiimjustin000.more_icons/player-object", playerObject, "my-icon", IconType::Icon).post();
+DispatchEvent<PlayerObject*, std::string>("hiimjustin000.more_icons/player-object", playerObject, "my-icon").post(); // Determines the icon type
+DispatchEvent<PlayerObject*, std::string, IconType>("hiimjustin000.more_icons/player-object", playerObject, "my-icon", IconType::Cube).post();
 ```
 
 ## Credits
