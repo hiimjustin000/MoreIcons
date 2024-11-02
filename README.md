@@ -65,7 +65,6 @@ DispatchEvent<SimplePlayer*, std::string, IconType>("hiimjustin000.more_icons/si
 
 // Change a GJRobotSprite to a custom icon
 DispatchEvent<GJRobotSprite*, std::string>("hiimjustin000.more_icons/robot-sprite", robotSprite, "my-icon").post(); // Determines the icon type
-
 DispatchEvent<GJRobotSprite*, std::string, IconType>("hiimjustin000.more_icons/robot-sprite", robotSprite, "my-icon", IconType::Robot).post();
 
 // Change a PlayerObject to a custom icon
