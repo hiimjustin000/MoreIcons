@@ -3,37 +3,31 @@
 
 using namespace geode::prelude;
 
-using SimplePlayerFilter = DispatchFilter<SimplePlayer*, std::string, IconType>;
-using RobotSpriteFilter = DispatchFilter<GJRobotSprite*, std::string>;
-using RobotSpriteTypeFilter = DispatchFilter<GJRobotSprite*, std::string, IconType>;
-using PlayerObjectFilter = DispatchFilter<PlayerObject*, std::string>;
-using PlayerObjectTypeFilter = DispatchFilter<PlayerObject*, std::string, IconType>;
-
 $execute {
-    new EventListener<SimplePlayerFilter>(+[](SimplePlayer* player, const std::string& icon, IconType type) {
+    new EventListener(+[](SimplePlayer* player, const std::string& icon, IconType type) {
         MoreIconsAPI::updateSimplePlayer(player, icon, type);
-        return ListenerResult::Stop;
-    }, SimplePlayerFilter("simple-player"_spr));
+        return ListenerResult::Propagate;
+    }, DispatchFilter<SimplePlayer*, std::string, IconType>("simple-player"_spr));
 
-    new EventListener<RobotSpriteFilter>(+[](GJRobotSprite* sprite, const std::string& icon) {
+    new EventListener(+[](GJRobotSprite* sprite, const std::string& icon) {
         MoreIconsAPI::updateRobotSprite(sprite, icon);
-        return ListenerResult::Stop;
-    }, RobotSpriteFilter("robot-sprite"_spr));
+        return ListenerResult::Propagate;
+    }, DispatchFilter<GJRobotSprite*, std::string>("robot-sprite"_spr));
 
-    new EventListener<RobotSpriteTypeFilter>(+[](GJRobotSprite* sprite, const std::string& icon, IconType type) {
+    new EventListener(+[](GJRobotSprite* sprite, const std::string& icon, IconType type) {
         MoreIconsAPI::updateRobotSprite(sprite, icon, type);
-        return ListenerResult::Stop;
-    }, RobotSpriteTypeFilter("robot-sprite"_spr));
+        return ListenerResult::Propagate;
+    }, DispatchFilter<GJRobotSprite*, std::string, IconType>("robot-sprite"_spr));
 
-    new EventListener<PlayerObjectFilter>(+[](PlayerObject* object, const std::string& icon) {
+    new EventListener(+[](PlayerObject* object, const std::string& icon) {
         MoreIconsAPI::updatePlayerObject(object, icon);
-        return ListenerResult::Stop;
-    }, PlayerObjectFilter("player-object"_spr));
+        return ListenerResult::Propagate;
+    }, DispatchFilter<PlayerObject*, std::string>("player-object"_spr));
 
-    new EventListener<PlayerObjectTypeFilter>(+[](PlayerObject* object, const std::string& icon, IconType type) {
+    new EventListener(+[](PlayerObject* object, const std::string& icon, IconType type) {
         MoreIconsAPI::updatePlayerObject(object, icon, type);
-        return ListenerResult::Stop;
-    }, PlayerObjectTypeFilter("player-object"_spr));
+        return ListenerResult::Propagate;
+    }, DispatchFilter<PlayerObject*, std::string, IconType>("player-object"_spr));
 }
 
 $on_mod(DataSaved) {

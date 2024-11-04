@@ -9,9 +9,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         ListButtonBar* m_pageBar;
         CCMenu* m_navMenu;
         std::map<IconType, int> m_pages;
-        CCObject* m_originalSDISwitchTarget;
         SEL_MenuHandler m_originalSDISwitch;
-        CCObject* m_originalSDISwapTarget;
         SEL_MenuHandler m_originalSDISwap;
     };
 
@@ -40,17 +38,22 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         else createNavMenu();
 
         if (sdi) {
-            auto p1Button = static_cast<CCMenuItemSpriteExtra*>(getChildByID("player-buttons-menu")->getChildByID("player1-button"));
-            auto p2Button = static_cast<CCMenuItemSpriteExtra*>(getChildByID("player-buttons-menu")->getChildByID("player2-button"));
-            f->m_originalSDISwitchTarget = p1Button->m_pListener;
-            f->m_originalSDISwitch = p2Button->m_pfnSelector;
-            p1Button->setTarget(this, menu_selector(MIGarageLayer::newOn2PToggle));
-            p2Button->setTarget(this, menu_selector(MIGarageLayer::newOn2PToggle));
+            if (auto playerButtonsMenu = getChildByID("player-buttons-menu")) {
+                auto p1Button = static_cast<CCMenuItemSpriteExtra*>(playerButtonsMenu->getChildByID("player1-button"));
+                auto p2Button = static_cast<CCMenuItemSpriteExtra*>(playerButtonsMenu->getChildByID("player2-button"));
+                if (p1Button && p2Button) {
+                    f->m_originalSDISwitch = p2Button->m_pfnSelector;
+                    p1Button->m_pfnSelector = menu_selector(MIGarageLayer::newOn2PToggle);
+                    p2Button->m_pfnSelector = menu_selector(MIGarageLayer::newOn2PToggle);
+                }
+            }
 
-            auto swap2PButton = static_cast<CCMenuItemSpriteExtra*>(getChildByID("shards-menu")->getChildByID("swap-2p-button"));
-            f->m_originalSDISwapTarget = swap2PButton->m_pListener;
-            f->m_originalSDISwap = swap2PButton->m_pfnSelector;
-            swap2PButton->setTarget(this, menu_selector(MIGarageLayer::newSwap2PKit));
+            if (auto shardsMenu = getChildByID("shards-menu")) {
+                if (auto swap2PButton = static_cast<CCMenuItemSpriteExtra*>(shardsMenu->getChildByID("swap-2p-button"))) {
+                    f->m_originalSDISwap = swap2PButton->m_pfnSelector;
+                    swap2PButton->m_pfnSelector = menu_selector(MIGarageLayer::newSwap2PKit);
+                }
+            }
         }
 
         auto moreIconsSprite = CircleButtonSprite::createWithSprite("MI_moreIcons_001.png"_spr, 1.0f, CircleBaseColor::Gray, CircleBaseSize::Small);
@@ -96,13 +99,15 @@ class $modify(MIGarageLayer, GJGarageLayer) {
 
     void newOn2PToggle(CCObject* sender) {
         auto f = m_fields.self();
-        (f->m_originalSDISwitchTarget->*f->m_originalSDISwitch)(sender);
+        (this->*f->m_originalSDISwitch)(sender);
+
         setupCustomPage(f->m_pages[m_iconType]);
     }
 
     void newSwap2PKit(CCObject* sender) {
         auto f = m_fields.self();
-        (f->m_originalSDISwapTarget->*f->m_originalSDISwap)(sender);
+        (this->*f->m_originalSDISwap)(sender);
+
         MoreIcons::swapDual("icon");
         MoreIcons::swapDual("ship");
         MoreIcons::swapDual("ball");
@@ -437,6 +442,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons");
         auto dual = sdi && sdi->getSavedValue("2pselected", false);
         std::string name = static_cast<CCString*>(sender->getUserObject("name"_spr))->getCString();
+        using namespace std::string_view_literals;
 
         m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
         m_cursor1->setVisible(true);
@@ -465,33 +471,27 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                 fmt::format("This <cg>{}</c> is added by the <cl>More Icons</c> mod.", std::string(ItemInfoPopup::nameForUnlockType(1, UnlockType::Streak))));
             if (auto completionMenu = popup->m_mainLayer->getChildByID("completionMenu")) completionMenu->setVisible(false);
             if (auto infoButton = popup->m_buttonMenu->getChildByID("infoButton")) infoButton->setVisible(false);
-            if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
-                return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
-            })) {
-                auto creditText = static_cast<CCLabelBMFont*>(creditButton->getNormalImage());
-                creditText->setString(trailInfo.pack.name.c_str());
-                creditText->limitLabelWidth(100.0f, 0.5f, 0.0f);
-                creditButton->setEnabled(false);
-                creditButton->updateSprite();
+            if (!trailInfo.pack.id.empty()) {
+                if (auto creditButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
+                    return typeinfo_cast<CCLabelBMFont*>(btn->getNormalImage()) != nullptr;
+                })) {
+                    auto creditText = static_cast<CCLabelBMFont*>(creditButton->getNormalImage());
+                    creditText->setString(trailInfo.pack.name.c_str());
+                    creditText->limitLabelWidth(100.0f, 0.5f, 0.0f);
+                    creditButton->setEnabled(false);
+                    creditButton->updateSprite();
+                }
             }
-            if (auto p1Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
-                if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
-                    if (auto p1Label = normalImage->getChildByType<CCLabelBMFont>(0)) return strcmp(p1Label->getString(), "P1") == 0;
+            for (auto child : CCArrayExt<CCNode*>(popup->m_buttonMenu->getChildren())) {
+                if (auto button = typeinfo_cast<CCMenuItemSpriteExtra*>(child)) {
+                    if (auto normalImage = typeinfo_cast<CCSprite*>(button->getNormalImage())) {
+                        if (auto imageLabel = normalImage->getChildByType<CCLabelBMFont>(0)) {
+                            if (imageLabel->getString() == "P1"sv || imageLabel->getString() == "P2"sv || imageLabel->getString() == "G"sv)
+                                button->setVisible(false);
+                        }
+                    }
                 }
-                return false;
-            })) p1Button->setVisible(false);
-            if (auto p2Button = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
-                if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
-                    if (auto p2Label = normalImage->getChildByType<CCLabelBMFont>(0)) return strcmp(p2Label->getString(), "P2") == 0;
-                }
-                return false;
-            })) p2Button->setVisible(false);
-            if (auto gButton = findFirstChildRecursive<CCMenuItemSpriteExtra>(popup->m_buttonMenu, [](CCMenuItemSpriteExtra* btn) {
-                if (auto normalImage = typeinfo_cast<CCSprite*>(btn->getNormalImage())) {
-                    if (auto gLabel = normalImage->getChildByType<CCLabelBMFont>(0)) return strcmp(gLabel->getString(), "G") == 0;
-                }
-                return false;
-            })) gButton->setVisible(false);
+            }
             auto winSize = CCDirector::get()->getWinSize();
             auto blendToggler = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [this, name](CCMenuItemToggler* sender) {
                 MoreIcons::TRAIL_INFO[name].blend = !sender->isToggled();

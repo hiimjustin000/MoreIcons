@@ -1,3 +1,4 @@
+// https://github.com/Alphalaneous/FineOutline/blob/1.0.8/src/CCSpriteBatchNode.h#L24 probably
 class DummyNode : public cocos2d::CCSpriteBatchNode {
 public:
     static DummyNode* createWithTexture(cocos2d::CCTexture2D* texture, unsigned int capacity) {
@@ -24,6 +25,8 @@ public:
     }
 
     void addChild(CCNode* child, int zOrder, int tag) override {
+        if (geode::cast::typeinfo_cast<CCBlendProtocol*>(child)) recursiveBlend(child, getBlendFunc());
+
         CCNode::addChild(child, zOrder, tag);
     }
 
@@ -33,6 +36,24 @@ public:
 
     void visit() override {
         CCNode::visit();
+    }
+
+    void setBlendFunc(cocos2d::ccBlendFunc blendFunc) override {
+        CCSpriteBatchNode::setBlendFunc(blendFunc);
+
+        for (auto child : geode::cocos::CCArrayExt<CCNode*>(getChildren())) {
+            if (geode::cast::typeinfo_cast<CCBlendProtocol*>(child)) recursiveBlend(child, blendFunc);
+        }
+    }
+
+    void recursiveBlend(CCNode* node, cocos2d::ccBlendFunc blendFunc) {
+        if (!node) return;
+
+        if (auto blendNode = geode::cast::typeinfo_cast<CCBlendProtocol*>(node)) blendNode->setBlendFunc(blendFunc);
+
+        for (auto child : geode::cocos::CCArrayExt<CCNode*>(node->getChildren())) {
+            if (geode::cast::typeinfo_cast<CCBlendProtocol*>(child)) recursiveBlend(child, blendFunc);
+        }
     }
 };
 

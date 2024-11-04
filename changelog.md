@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.4.5 (2024-11-04)
+- Fixed potential blending issues with robots and spiders
+
 ## v1.4.4 (2024-11-02)
 - Fixed events not working properly
 
