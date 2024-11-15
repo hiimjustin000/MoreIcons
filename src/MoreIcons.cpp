@@ -200,17 +200,16 @@ void MoreIcons::loadIcons(const std::vector<std::filesystem::path>& packs, const
                 std::ifstream file(packJSON);
                 std::stringstream bufferStream;
                 bufferStream << file.rdbuf();
-                std::string error;
-                auto tryJson = matjson::parse(bufferStream.str(), error);
+                auto tryJson = matjson::parse(bufferStream.str());
                 auto packFileName = rootPackPath.filename().string();
-                if (!error.empty()) {
+                if (!tryJson.isOk()) {
                     packName = packFileName;
                     packID = packFileName;
                 }
-                auto json = tryJson.value_or(matjson::Object());
-                if (json.contains("name") && json["name"].is_string()) packName = json["name"].as_string();
+                auto json = tryJson.unwrapOr(matjson::Value());
+                if (json.contains("name") && json["name"].isString()) packName = json["name"].asString().unwrap();
                 else packName = packFileName;
-                if (json.contains("id") && json["id"].is_string()) packID = json["id"].as_string();
+                if (json.contains("id") && json["id"].isString()) packID = json["id"].asString().unwrap();
                 else packID = packFileName;
             }
         }
@@ -439,17 +438,16 @@ void MoreIcons::loadTrails(const std::vector<std::filesystem::path>& packs) {
                 std::ifstream file(packJSON);
                 std::stringstream bufferStream;
                 bufferStream << file.rdbuf();
-                std::string error;
-                auto tryJson = matjson::parse(bufferStream.str(), error);
+                auto tryJson = matjson::parse(bufferStream.str());
                 auto packFileName = rootPackPath.filename().string();
-                if (!error.empty()) {
+                if (!tryJson.isOk()) {
                     packName = packFileName;
                     packID = packFileName;
                 }
-                auto json = tryJson.value_or(matjson::Object());
-                if (json.contains("name") && json["name"].is_string()) packName = json["name"].as_string();
+                auto json = tryJson.unwrapOr(matjson::Value());
+                if (json.contains("name") && json["name"].isString()) packName = json["name"].asString().unwrap();
                 else packName = packFileName;
-                if (json.contains("id") && json["id"].is_string()) packID = json["id"].as_string();
+                if (json.contains("id") && json["id"].isString()) packID = json["id"].asString().unwrap();
                 else packID = packFileName;
             }
         }
@@ -488,24 +486,23 @@ void MoreIcons::loadTrail(const std::filesystem::path& path, const TexturePack& 
         auto name = (!pack.id.empty() ? pack.id + ":" : "") + path.stem().string();
         auto jsonPath = std::filesystem::path(path).replace_extension(".json");
         matjson::Value json;
-        if (!std::filesystem::exists(jsonPath)) json = matjson::Object { { "blend", false }, { "tint", false } };
+        if (!std::filesystem::exists(jsonPath)) json = matjson::makeObject({ { "blend", false }, { "tint", false } });
         else {
             std::ifstream file(jsonPath);
             std::stringstream bufferStream;
             bufferStream << file.rdbuf();
-            std::string error;
-            auto tryJson = matjson::parse(bufferStream.str(), error);
-            if (!error.empty()) {
-                auto logMessage = fmt::format("{}: Failed to parse JSON file ({})", path.string(), error);
+            auto tryJson = matjson::parse(bufferStream.str());
+            if (!tryJson.isOk()) {
+                auto logMessage = fmt::format("{}: Failed to parse JSON file ({})", path.string(), tryJson.unwrapErr());
                 log::warn("{}", logMessage);
                 {
                     std::lock_guard lock(LOG_MUTEX);
                     LOGS.push_back({ .message = logMessage, .type = LogType::Warn });
                     if (HIGHEST_SEVERITY < LogType::Warn) HIGHEST_SEVERITY = LogType::Warn;
                 }
-                json = matjson::Object { { "blend", false }, { "tint", false } };
+                json = matjson::makeObject({ { "blend", false }, { "tint", false } });
             }
-            else json = tryJson.value_or(matjson::Object { { "blend", false }, { "tint", false } });
+            else json = tryJson.unwrap();
         }
 
         auto fullTexturePath = path.string();
@@ -521,8 +518,8 @@ void MoreIcons::loadTrail(const std::filesystem::path& path, const TexturePack& 
                 .pack = pack,
                 .type = IconType::Special,
                 .index = 0,
-                .blend = json.contains("blend") && json["blend"].is_bool() ? json["blend"].as_bool() : false,
-                .tint = json.contains("tint") && json["tint"].is_bool() ? json["tint"].as_bool() : false,
+                .blend = json.contains("blend") && json["blend"].isBool() ? json["blend"].asBool().unwrap() : false,
+                .tint = json.contains("tint") && json["tint"].isBool() ? json["tint"].asBool().unwrap() : false,
             });
         }
         else image->release();

@@ -18,12 +18,12 @@ bool LogLayer::setup() {
 
     auto background = CCScale9Sprite::create("square02_001.png", { 0, 0, 80, 80 });
     background->setContentSize({ 400.0f, 230.0f });
-    background->setPosition(220.0f, 135.0f);
+    background->setPosition({ 220.0f, 135.0f });
     background->setOpacity(127);
     m_mainLayer->addChild(background);
 
     auto scrollLayer = ScrollLayer::create({ 400.0f, 230.0f });
-    scrollLayer->setPosition(20.0f, 20.0f);
+    scrollLayer->setPosition({ 20.0f, 20.0f });
     scrollLayer->m_contentLayer->setLayout(
         ColumnLayout::create()
             ->setAxisReverse(true)
@@ -44,7 +44,7 @@ bool LogLayer::setup() {
     scrollLayer->scrollToTop();
 
     auto topButtons = CCMenu::create();
-    topButtons->setPosition(420.0f, 270.0f);
+    topButtons->setPosition({ 420.0f, 270.0f });
     topButtons->setContentSize({ 100.0f, 30.0f });
     topButtons->setAnchorPoint({ 1.0f, 0.5f });
     topButtons->setLayout(

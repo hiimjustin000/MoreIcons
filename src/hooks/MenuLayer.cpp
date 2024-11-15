@@ -5,13 +5,24 @@ using namespace geode::prelude;
 #include <Geode/modify/MenuLayer.hpp>
 class $modify(MIMenuLayer, MenuLayer) {
     static void onModify(auto& self) {
-        (void)self.setHookPriority("MenuLayer::init", -1);
+        if (auto initHookRes = self.getHook("MenuLayer::init")) {
+            auto initHook = initHookRes.unwrap();
+            if (auto iconProfile = Loader::get()->getInstalledMod("capeling.icon_profile")) {
+                if (iconProfile->shouldLoad()) {
+                    initHook->setPriority(-1);
+                    return;
+                }
+            }
+
+            queueInMainThread([initHook] {
+                if (!initHook->disable()) log::error("Failed to disable MenuLayer::init hook");
+            });
+        }
+        else log::error("Failed to find MenuLayer::init hook");
     }
 
     bool init() {
         if (!MenuLayer::init()) return false;
-
-        if (!Loader::get()->isModLoaded("capeling.icon_profile")) return true;
 
         auto profileMenu = getChildByID("profile-menu");
         if (!profileMenu) return true;

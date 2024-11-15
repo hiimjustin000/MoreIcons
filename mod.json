@@ -1,11 +1,11 @@
 {
-    "geode": "3.9.0",
+    "geode": "4.0.0-alpha.1",
     "gd": {
-        "android": "2.206",
-        "win": "2.206",
-        "mac": "2.206"
+        "android": "2.2074",
+        "win": "2.2074",
+        "mac": "2.2074"
     },
-    "version": "v1.4.5",
+    "version": "v1.4.6-beta.1",
     "id": "hiimjustin000.more_icons",
     "name": "More Icons",
     "developer": "hiimjustin000",

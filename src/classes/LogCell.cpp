@@ -28,22 +28,22 @@ bool LogCell::init(LogData const& data, int index, int total, bool dark) {
     bg->ignoreAnchorPointForPosition(false);
     if (index == 0) {
         bg->setContentSize({ 400.0f, 35.0f });
-        bg->setPosition(200.0f, 17.5f);
+        bg->setPosition({ 200.0f, 17.5f });
     }
     else if (index == total - 1) {
         bg->setContentSize({ 400.0f, 35.0f });
-        bg->setPosition(200.0f, 52.5f);
+        bg->setPosition({ 200.0f, 52.5f });
     }
     else {
         bg->setContentSize({ 400.0f, 70.0f });
-        bg->setPosition(200.0f, 35.0f);
+        bg->setPosition({ 200.0f, 35.0f });
     }
     addChild(bg, -1);
 
     if (index == 0 || index == total - 1) {
         auto bgBg = CCScale9Sprite::create("square02b_001.png", { 0, 0, 80, 80 });
         bgBg->setContentSize({ 400.0f, 70.0f });
-        bgBg->setPosition(200.0f, 35.0f);
+        bgBg->setPosition({ 200.0f, 35.0f });
         bgBg->setColor(bg->getColor());
         addChild(bgBg, -2);
     }

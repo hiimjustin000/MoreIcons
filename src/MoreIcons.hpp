@@ -156,10 +156,10 @@ public:
     static void saveTrails() {
         for (auto& [trail, info] : TRAIL_INFO) {
             std::fstream file(std::filesystem::path(info.texture).replace_extension(".json"), std::ios::out);
-            file << matjson::Value(matjson::Object {
+            file << matjson::Value(matjson::makeObject({
                 { "blend", info.blend },
                 { "tint", info.tint },
-            }).dump();
+            })).dump();
             file.close();
         }
     }

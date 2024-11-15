@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.4.6-beta.1 (2024-11-13)
+- Ported to Geometry Dash v2.207
+
 ## v1.4.5 (2024-11-04)
 - Fixed potential blending issues with robots and spiders
 
