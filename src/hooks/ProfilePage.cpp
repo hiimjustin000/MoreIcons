@@ -36,6 +36,8 @@ class $modify(MIProfilePage, ProfilePage) {
     }
 
     void newOn2PToggle(CCObject* sender) {
+        CALL_BUTTON_ORIGINAL(sender);
+
         auto playerMenu = m_mainLayer->getChildByID("player-menu");
         if (!playerMenu) return;
 

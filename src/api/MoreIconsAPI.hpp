@@ -108,17 +108,24 @@ public:
 
     static void updateRobotSprite(GJRobotSprite* sprite, const std::string& icon, IconType type);
 
+    static IconType getIconType(PlayerObject* object) {
+        if (object->m_isShip) {
+            if (object->m_isPlatformer) return IconType::Jetpack;
+            else return IconType::Ship;
+        }
+        else if (object->m_isBall) return IconType::Ball;
+        else if (object->m_isBird) return IconType::Ufo;
+        else if (object->m_isDart) return IconType::Wave;
+        else if (object->m_isRobot) return IconType::Robot;
+        else if (object->m_isSpider) return IconType::Spider;
+        else if (object->m_isSwing) return IconType::Swing;
+        else return IconType::Cube;
+    }
+
     static void updatePlayerObject(PlayerObject* object, const std::string& icon) {
         if (!object || icon.empty()) return;
 
-        if (object->m_isShip) updatePlayerObject(object, icon, object->m_isPlatformer ? IconType::Jetpack : IconType::Ship);
-        else if (object->m_isBall) updatePlayerObject(object, icon, IconType::Ball);
-        else if (object->m_isBird) updatePlayerObject(object, icon, IconType::Ufo);
-        else if (object->m_isDart) updatePlayerObject(object, icon, IconType::Wave);
-        else if (object->m_isRobot) updatePlayerObject(object, icon, IconType::Robot);
-        else if (object->m_isSpider) updatePlayerObject(object, icon, IconType::Spider);
-        else if (object->m_isSwing) updatePlayerObject(object, icon, IconType::Swing);
-        else updatePlayerObject(object, icon, IconType::Cube);
+        updatePlayerObject(object, icon, getIconType(object));
     }
 
     static void updatePlayerObject(PlayerObject* object, const std::string& icon, IconType type);

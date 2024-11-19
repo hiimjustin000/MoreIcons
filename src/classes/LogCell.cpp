@@ -2,7 +2,7 @@
 
 using namespace geode::prelude;
 
-LogCell* LogCell::create(LogData const& data, int index, int total, bool dark) {
+LogCell* LogCell::create(const LogData& data, int index, int total, bool dark) {
     auto ret = new LogCell();
     if (ret->init(data, index, total, dark)) {
         ret->autorelease();
@@ -12,7 +12,7 @@ LogCell* LogCell::create(LogData const& data, int index, int total, bool dark) {
     return nullptr;
 }
 
-bool LogCell::init(LogData const& data, int index, int total, bool dark) {
+bool LogCell::init(const LogData& data, int index, int total, bool dark) {
     if (!CCLayer::init()) return false;
 
     ignoreAnchorPointForPosition(false);

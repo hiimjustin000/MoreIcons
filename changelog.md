@@ -1,4 +1,10 @@
 # More Icons Changelog
+## v1.5.0 (2024-11-18)
+- Added custom icons to the main menu
+- Fixed a bug where switching separate dual icons would not work properly in the icon kit
+- Fixed crashing incompatibilities with the mod "Fine Outline" by Alphalaneous
+- Fixed some potential spider weirdness
+
 ## v1.4.6 (2024-11-15)
 - Ported to Geode v4.0.0-beta.1
 

@@ -139,8 +139,7 @@ public:
     static std::vector<std::filesystem::path> getTexturePacks();
 
     static std::string replaceEnd(const std::string& str, const std::string& end, const std::string& replace, bool check = false) {
-        if (!check || str.ends_with(end)) return str.substr(0, str.size() - end.size()) + replace;
-        return str;
+        return !check || str.ends_with(end) ? str.substr(0, str.size() - end.size()) + replace : str;
     }
 
     static void loadIcons(

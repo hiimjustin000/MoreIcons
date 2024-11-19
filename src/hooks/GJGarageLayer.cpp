@@ -42,8 +42,8 @@ class $modify(MIGarageLayer, GJGarageLayer) {
                 auto p1Button = static_cast<CCMenuItemSpriteExtra*>(playerButtonsMenu->getChildByID("player1-button"));
                 auto p2Button = static_cast<CCMenuItemSpriteExtra*>(playerButtonsMenu->getChildByID("player2-button"));
                 if (p1Button && p2Button) {
-                    ButtonHooker::create(p1Button, this, menu_selector(MIGarageLayer::onSelectTab));
-                    ButtonHooker::create(p2Button, this, menu_selector(MIGarageLayer::onSelectTab));
+                    ButtonHooker::create(p1Button, this, menu_selector(MIGarageLayer::newOn2PToggle));
+                    ButtonHooker::create(p2Button, this, menu_selector(MIGarageLayer::newOn2PToggle));
                 }
             }
 
@@ -97,10 +97,14 @@ class $modify(MIGarageLayer, GJGarageLayer) {
     }
 
     void newOn2PToggle(CCObject* sender) {
+        CALL_BUTTON_ORIGINAL(sender);
+
         setupCustomPage(m_fields->m_pages[m_iconType]);
     }
 
     void newSwap2PKit(CCObject* sender) {
+        CALL_BUTTON_ORIGINAL(sender);
+
         MoreIcons::swapDual("icon");
         MoreIcons::swapDual("ship");
         MoreIcons::swapDual("ball");
@@ -268,20 +272,12 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         f->m_pages[m_iconType] = MoreIcons::wrapPage(m_iconType, page);
         createNavMenu();
 
-        auto gameManager = GameManager::get();
-        auto iconType = gameManager->m_playerIconType;
-        MoreIconsAPI::updateSimplePlayer(m_playerObject, Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(iconType, false), ""), iconType);
-        if (auto sdi = Loader::get()->getLoadedMod("weebify.separate_dual_icons")) {
-            auto lastmode = (IconType)sdi->getSavedValue("lastmode", 0);
-            MoreIconsAPI::updateSimplePlayer(static_cast<SimplePlayer*>(getChildByID("player2-icon")),
-                Mod::get()->getSavedValue<std::string>(MoreIconsAPI::savedForType(lastmode, true), ""), lastmode);
-        }
-
         auto spriteFrameCache = CCSpriteFrameCache::get();
         for (auto navDot : CCArrayExt<CCMenuItemSpriteExtra*>(m_navDotMenu->getChildren())) {
             static_cast<CCSprite*>(navDot->getNormalImage())->setDisplayFrame(spriteFrameCache->spriteFrameByName("gj_navDotBtn_off_001.png"));
         }
 
+        auto gameManager = GameManager::get();
         auto unlockType = gameManager->iconTypeToUnlockType(m_iconType);
         auto playerSquare = CCSprite::createWithSpriteFrameName("playerSquare_001.png");
         auto objs = CCArray::create();

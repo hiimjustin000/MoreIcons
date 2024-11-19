@@ -141,7 +141,7 @@ void MoreIconsAPI::updatePlayerObject(PlayerObject* object, const std::string& i
         auto hasExisted = batchNode && batchNode->getParent() == object->m_mainLayer;
         robotSprite->retain();
         if (batchNode) {
-            robotSprite->removeFromParent();
+            robotSprite->removeFromParentAndCleanup(false);
             batchNode->removeFromParent();
             batchNode->release();
         }
@@ -150,7 +150,8 @@ void MoreIconsAPI::updatePlayerObject(PlayerObject* object, const std::string& i
         batchNode = type == IconType::Robot ? object->m_robotBatchNode : object->m_spiderBatchNode;
         batchNode->retain();
         batchNode->addChild(robotSprite);
-        if (hasExisted && object->m_isRobot) object->m_mainLayer->addChild(batchNode, 2);
+        if (hasExisted && ((type == IconType::Robot && object->m_isRobot) || (type == IconType::Spider && object->m_isSpider)))
+            object->m_mainLayer->addChild(batchNode, 2);
         robotSprite->release();
         return;
     }
