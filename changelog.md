@@ -1,4 +1,10 @@
 # More Icons Changelog
+## v1.5.1 (2024-12-11)
+- Separated icon loading by icon type
+- Separated icons by texture pack in the icon kit ([#17](https://github.com/hiimjustin000/MoreIcons/issues/17))
+- Fixed a bug that would reset the player's icon when exiting dual mode ([#15](https://github.com/hiimjustin000/MoreIcons/issues/15))
+- Fixed pages not updating properly in the icon kit using arrow buttons (Reported by [NyteLyte](https://github.com/NyteLytee))
+
 ## v1.5.0 (2024-11-18)
 - Added custom icons to the main menu
 - Fixed a bug where switching separate dual icons would not work properly in the icon kit

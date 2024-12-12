@@ -4,12 +4,81 @@ using namespace geode::prelude;
 
 #include <Geode/modify/LoadingLayer.hpp>
 class $modify(MILoadingLayer, LoadingLayer) {
-    void loadAssets() {
-        LoadingLayer::loadAssets();
+    struct Fields {
+        int m_iconLoadStep;
+        std::vector<std::filesystem::path> m_iconPacks;
+    };
 
-        if (m_loadStep == 1) {
-            if (auto smallLabel2 = static_cast<CCLabelBMFont*>(getChildByID("geode-small-label-2"))) smallLabel2->setString("More Icons: Loading Icons");
+    static void onModify(auto& self) {
+        (void)self.setHookPriority("LoadingLayer::loadAssets", 1);
+    }
+
+    void loadAssets() {
+        if (m_loadStep > 0) {
+            LoadingLayer::loadAssets();
+            return;
         }
-        else if (m_loadStep == 2) MoreIcons::load(this);
+
+        auto f = m_fields.self();
+        switch (f->m_iconLoadStep) {
+            case 0:
+                f->m_iconPacks = MoreIcons::getTexturePacks();
+                break;
+            case 1:
+                MoreIcons::loadIcons(f->m_iconPacks, "icon", IconType::Cube);
+                break;
+            case 2:
+                MoreIcons::loadIcons(f->m_iconPacks, "ship", IconType::Ship);
+                break;
+            case 3:
+                MoreIcons::loadIcons(f->m_iconPacks, "ball", IconType::Ball);
+                break;
+            case 4:
+                MoreIcons::loadIcons(f->m_iconPacks, "ufo", IconType::Ufo);
+                break;
+            case 5:
+                MoreIcons::loadIcons(f->m_iconPacks, "wave", IconType::Wave);
+                break;
+            case 6:
+                MoreIcons::loadIcons(f->m_iconPacks, "robot", IconType::Robot);
+                break;
+            case 7:
+                MoreIcons::loadIcons(f->m_iconPacks, "spider", IconType::Spider);
+                break;
+            case 8:
+                MoreIcons::loadIcons(f->m_iconPacks, "swing", IconType::Swing);
+                break;
+            case 9:
+                MoreIcons::loadIcons(f->m_iconPacks, "jetpack", IconType::Jetpack);
+                break;
+            case 10:
+                MoreIcons::loadTrails(f->m_iconPacks);
+                break;
+            default:
+                LoadingLayer::loadAssets();
+                return;
+        }
+
+        if (f->m_iconLoadStep < 11) {
+            f->m_iconLoadStep++;
+            changeLoadText();
+            queueInMainThread([this] { loadAssets(); });
+        }
+    }
+
+    void changeLoadText() {
+        if (auto smallLabel2 = static_cast<CCLabelBMFont*>(getChildByID("geode-small-label-2"))) switch (m_fields->m_iconLoadStep) {
+            case 1: smallLabel2->setString("More Icons: Loading Icons"); break;
+            case 2: smallLabel2->setString("More Icons: Loading Ships"); break;
+            case 3: smallLabel2->setString("More Icons: Loading Balls"); break;
+            case 4: smallLabel2->setString("More Icons: Loading UFOs"); break;
+            case 5: smallLabel2->setString("More Icons: Loading Waves"); break;
+            case 6: smallLabel2->setString("More Icons: Loading Robots"); break;
+            case 7: smallLabel2->setString("More Icons: Loading Spiders"); break;
+            case 8: smallLabel2->setString("More Icons: Loading Swings"); break;
+            case 9: smallLabel2->setString("More Icons: Loading Jetpacks"); break;
+            case 10: smallLabel2->setString("More Icons: Loading Trails"); break;
+            case 11: smallLabel2->setString(""); break;
+        }
     }
 };

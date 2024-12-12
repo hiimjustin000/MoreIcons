@@ -68,30 +68,52 @@ std::vector<std::filesystem::directory_entry> MoreIcons::naturalSort(const std::
 }
 
 void MoreIcons::naturalSort(std::vector<std::string>& vec) {
-    std::sort(vec.begin(), vec.end(), [](const std::string& aStr, const std::string& bStr) {
-        auto a = aStr.substr(aStr.find_first_of(':') + 1);
-        auto b = bStr.substr(bStr.find_first_of(':') + 1);
-        auto aIt = a.begin();
-        auto bIt = b.begin();
+    std::map<std::string, std::vector<std::string>> packs;
+    for (auto& str : vec) {
+        auto index = str.find_first_of(':');
+        packs[str.substr(0, index != std::string::npos ? index : 0)].push_back(str);
+    }
 
-        while (aIt != a.end() && bIt != b.end()) {
-            if (std::isdigit(*aIt) && std::isdigit(*bIt)) {
-                std::string aNum, bNum;
-                while (std::isdigit(*aIt)) aNum += *aIt++;
-                while (std::isdigit(*bIt)) bNum += *bIt++;
-                if (aNum != bNum) return std::stoi(aNum) < std::stoi(bNum);
-            }
-            else {
-                auto aLower = std::tolower(*aIt);
-                auto bLower = std::tolower(*bIt);
-                if (aLower != bLower) return aLower < bLower;
-                aIt++;
-                bIt++;
-            }
+    for (auto& [_, pack] : packs) {
+        std::sort(pack.begin(), pack.end(), naturalSorter);
+    }
+
+    std::vector<std::string> packIDs;
+    for (auto& [packID, _] : packs) {
+        packIDs.push_back(packID);
+    }
+    std::sort(packIDs.begin(), packIDs.end(), naturalSorter);
+
+    vec.clear();
+    for (auto& packID : packIDs) {
+        auto& pack = packs[packID];
+        vec.insert(vec.end(), pack.begin(), pack.end());
+    }
+}
+
+bool MoreIcons::naturalSorter(const std::string& aStr, const std::string& bStr) {
+    auto a = aStr.substr(aStr.find_first_of(':') + 1);
+    auto b = bStr.substr(bStr.find_first_of(':') + 1);
+    auto aIt = a.begin();
+    auto bIt = b.begin();
+
+    while (aIt != a.end() && bIt != b.end()) {
+        if (std::isdigit(*aIt) && std::isdigit(*bIt)) {
+            std::string aNum, bNum;
+            while (std::isdigit(*aIt)) aNum += *aIt++;
+            while (std::isdigit(*bIt)) bNum += *bIt++;
+            if (aNum != bNum) return std::stoi(aNum) < std::stoi(bNum);
         }
+        else {
+            auto aLower = std::tolower(*aIt);
+            auto bLower = std::tolower(*bIt);
+            if (aLower != bLower) return aLower < bLower;
+            aIt++;
+            bIt++;
+        }
+    }
 
-        return a.size() < b.size();
-    });
+    return a.size() < b.size();
 }
 
 // The cooler https://github.com/Alphalaneous/HappyTextures/blob/1.5.0/src/Utils.h#L60
@@ -120,75 +142,7 @@ std::vector<std::filesystem::path> MoreIcons::getTexturePacks() {
     return packs;
 }
 
-void MoreIcons::load(LoadingLayer* layer) {
-    auto packs = getTexturePacks();
-    { loadIcons(packs, "icon", IconType::Cube); }
-    { loadIcons(packs, "ship", IconType::Ship); }
-    { loadIcons(packs, "ball", IconType::Ball); }
-    { loadIcons(packs, "ufo", IconType::Ufo); }
-    { loadIcons(packs, "wave", IconType::Wave); }
-    { loadIcons(packs, "robot", IconType::Robot); }
-    { loadIcons(packs, "spider", IconType::Spider); }
-    { loadIcons(packs, "swing", IconType::Swing); }
-    { loadIcons(packs, "jetpack", IconType::Jetpack); }
-    { loadTrails(packs); }
-
-    sharedPool().wait();
-
-    {
-        std::lock_guard lock(IMAGE_MUTEX);
-        auto textureCache = CCTextureCache::get();
-        auto spriteFrameCache = CCSpriteFrameCache::get();
-        for (auto& image : IMAGES) {
-            auto texture = new CCTexture2D();
-            if (texture->initWithImage(image.image)) {
-                textureCache->m_pTextures->setObject(texture, image.texturePath);
-                if (!image.dict && !image.frameName.empty())
-                    spriteFrameCache->addSpriteFrame(
-                        CCSpriteFrame::createWithTexture(texture, { { 0, 0 }, texture->getContentSize() }),
-                        image.frameName.c_str()
-                    );
-                else if (image.dict) {
-                    _addSpriteFramesWithDictionary(image.dict, texture);
-                    CC_SAFE_RELEASE(image.dict);
-                }
-                if (image.index == 0) {
-                    MoreIconsAPI::vectorForType(image.type).push_back(image.name);
-                    if (image.type != IconType::Special) infoForType(image.type)[image.name] = image.pack;
-                }
-                if (image.type == IconType::Special) {
-                    TRAIL_INFO[image.name] = {
-                        .texture = image.texturePath,
-                        .pack = image.pack,
-                        .blend = image.blend,
-                        .tint = image.tint
-                    };
-                }
-            }
-
-            texture->release();
-            CC_SAFE_RELEASE(image.image);
-        }
-
-        IMAGES.clear();
-        restoreSaved();
-        naturalSort(MoreIconsAPI::ICONS);
-        naturalSort(MoreIconsAPI::SHIPS);
-        naturalSort(MoreIconsAPI::BALLS);
-        naturalSort(MoreIconsAPI::UFOS);
-        naturalSort(MoreIconsAPI::WAVES);
-        naturalSort(MoreIconsAPI::ROBOTS);
-        naturalSort(MoreIconsAPI::SPIDERS);
-        naturalSort(MoreIconsAPI::SWINGS);
-        naturalSort(MoreIconsAPI::JETPACKS);
-        naturalSort(MoreIconsAPI::TRAILS);
-
-        if (auto smallLabel2 = static_cast<CCLabelBMFont*>(layer->getChildByID("geode-small-label-2")))
-            smallLabel2->setString("");
-    }
-}
-
-void MoreIcons::loadIcons(const std::vector<std::filesystem::path>& packs, const std::string& suffix, IconType type) {
+void MoreIcons::loadIcons(const std::vector<std::filesystem::path>& packs, std::string_view suffix, IconType type) {
     int i = 0;
     for (auto& packPath : packs) {
         std::string packName;
@@ -236,6 +190,53 @@ void MoreIcons::loadIcons(const std::vector<std::filesystem::path>& packs, const
 
         i++;
     }
+
+    sharedPool().wait();
+
+    {
+        std::lock_guard lock(IMAGE_MUTEX);
+        auto textureCache = CCTextureCache::get();
+        auto spriteFrameCache = CCSpriteFrameCache::get();
+        auto& vec = MoreIconsAPI::vectorForType(type);
+        for (auto& image : IMAGES) {
+            auto texture = new CCTexture2D();
+            if (texture->initWithImage(image.image)) {
+                textureCache->m_pTextures->setObject(texture, image.texturePath);
+                if (!image.dict && !image.frameName.empty())
+                    spriteFrameCache->addSpriteFrame(
+                        CCSpriteFrame::createWithTexture(texture, { { 0, 0 }, texture->getContentSize() }),
+                        image.frameName.c_str()
+                    );
+                else if (image.dict) {
+                    _addSpriteFramesWithDictionary(image.dict, texture);
+                    CC_SAFE_RELEASE(image.dict);
+                }
+                if (image.index == 0) {
+                    vec.push_back(image.name);
+                    infoForType(type)[image.name] = image.pack;
+                }
+            }
+
+            texture->release();
+            CC_SAFE_RELEASE(image.image);
+        }
+
+        log::info("Loaded {} {}{}", vec.size(), suffix, vec.size() == 1 ? "" : "s");
+        IMAGES.clear();
+        naturalSort(vec);
+        switch (type) {
+            case IconType::Cube: Mod::get()->setSavedValue("icons", vec); break;
+            case IconType::Ship: Mod::get()->setSavedValue("ships", vec); break;
+            case IconType::Ball: Mod::get()->setSavedValue("balls", vec); break;
+            case IconType::Ufo: Mod::get()->setSavedValue("ufos", vec); break;
+            case IconType::Wave: Mod::get()->setSavedValue("waves", vec); break;
+            case IconType::Robot: Mod::get()->setSavedValue("robots", vec); break;
+            case IconType::Spider: Mod::get()->setSavedValue("spiders", vec); break;
+            case IconType::Swing: Mod::get()->setSavedValue("swings", vec); break;
+            case IconType::Jetpack: Mod::get()->setSavedValue("jetpacks", vec); break;
+            default: break;
+        }
+    }
 }
 
 void MoreIcons::loadIcon(const std::filesystem::path& path, const TexturePack& pack, IconType type) {
@@ -244,7 +245,7 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, const TexturePack& p
     auto textureQuality = CCDirector::get()->getLoadedTextureQuality();
     if (std::filesystem::is_directory(path)) {
         sharedPool().detach_task([path, pack, textureQuality, type] {
-            auto name = (!pack.id.empty() ? pack.id + ":" : "") + path.stem().string();
+            auto name = pack.id.empty() ? path.stem().string() : fmt::format("{}:{}", pack.id, path.stem());
             auto textureCache = CCTextureCache::get();
             auto spriteFrameCache = CCSpriteFrameCache::get();
             int i = 0;
@@ -314,7 +315,6 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, const TexturePack& p
                         .name = name,
                         .frameName = getFrameName(std::filesystem::path(noGraphicPngPath).filename().string(), name, type),
                         .pack = pack,
-                        .type = type,
                         .index = i
                     });
 
@@ -378,7 +378,8 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, const TexturePack& p
             if (fileQuality == kTextureQualityHigh) noGraphicPlistPath = replaceEnd(plistPath, "-uhd.plist", ".plist");
             else if (fileQuality == kTextureQualityMedium) noGraphicPlistPath = replaceEnd(plistPath, "-hd.plist", ".plist");
             else noGraphicPlistPath = plistPath;
-            auto name = (!pack.id.empty() ? pack.id + ":" : "") + std::filesystem::path(noGraphicPlistPath).stem().string();
+            auto name = pack.id.empty() ? std::filesystem::path(noGraphicPlistPath).stem().string() :
+                fmt::format("{}:{}", pack.id, std::filesystem::path(noGraphicPlistPath).stem());
 
             auto dict = CCDictionary::createWithContentsOfFileThreadSafe(plistPath.c_str());
             auto frames = new CCDictionary();
@@ -414,7 +415,6 @@ void MoreIcons::loadIcon(const std::filesystem::path& path, const TexturePack& p
                     .name = name,
                     .frameName = "",
                     .pack = pack,
-                    .type = type,
                     .index = 0
                 });
             }
@@ -457,11 +457,11 @@ void MoreIcons::loadTrails(const std::vector<std::filesystem::path>& packs) {
         }
 
         auto path = packPath / "trail";
-        log::info("Loading trails from {}", path.string());
         if (!std::filesystem::exists(path)) {
             if (i == 0) std::filesystem::create_directories(path);
-            return;
+            continue;
         }
+        log::info("Loading trails from {}", path.string());
 
         for (auto& entry : naturalSort(path)) {
             if (!entry.is_regular_file()) continue;
@@ -477,21 +477,47 @@ void MoreIcons::loadTrails(const std::vector<std::filesystem::path>& packs) {
 
         i++;
     }
+
+    sharedPool().wait();
+
+    {
+        std::lock_guard lock(IMAGE_MUTEX);
+        auto textureCache = CCTextureCache::get();
+        for (auto& image : IMAGES) {
+            auto texture = new CCTexture2D();
+            if (texture->initWithImage(image.image)) {
+                textureCache->m_pTextures->setObject(texture, image.texturePath);
+                MoreIconsAPI::TRAILS.push_back(image.name);
+                TRAIL_INFO[image.name] = {
+                    .texture = image.texturePath,
+                    .pack = image.pack,
+                    .blend = image.blend,
+                    .tint = image.tint
+                };
+            }
+
+            texture->release();
+            CC_SAFE_RELEASE(image.image);
+        }
+
+        log::info("Loaded {} trail{}", MoreIconsAPI::TRAILS.size(), MoreIconsAPI::TRAILS.size() == 1 ? "" : "s");
+        IMAGES.clear();
+        naturalSort(MoreIconsAPI::TRAILS);
+        Mod::get()->setSavedValue("trails", MoreIconsAPI::TRAILS);
+    }
 }
 
 void MoreIcons::loadTrail(const std::filesystem::path& path, const TexturePack& pack) {
     if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path) || path.extension() != ".png") return;
 
     sharedPool().detach_task([path, pack] {
-        auto name = (!pack.id.empty() ? pack.id + ":" : "") + path.stem().string();
+        auto name = pack.id.empty() ? path.stem().string() : fmt::format("{}:{}", pack.id, path.stem());
         auto jsonPath = std::filesystem::path(path).replace_extension(".json");
         matjson::Value json;
         if (!std::filesystem::exists(jsonPath)) json = matjson::makeObject({ { "blend", false }, { "tint", false } });
         else {
             std::ifstream file(jsonPath);
-            std::stringstream bufferStream;
-            bufferStream << file.rdbuf();
-            auto tryJson = matjson::parse(bufferStream.str());
+            auto tryJson = matjson::parse(file);
             if (!tryJson.isOk()) {
                 auto logMessage = fmt::format("{}: Failed to parse JSON file ({})", path.string(), tryJson.unwrapErr());
                 log::warn("{}", logMessage);
@@ -516,7 +542,6 @@ void MoreIcons::loadTrail(const std::filesystem::path& path, const TexturePack& 
                 .name = name,
                 .frameName = "",
                 .pack = pack,
-                .type = IconType::Special,
                 .index = 0,
                 .blend = json.contains("blend") && json["blend"].isBool() ? json["blend"].asBool().unwrap() : false,
                 .tint = json.contains("tint") && json["tint"].isBool() ? json["tint"].asBool().unwrap() : false,

@@ -86,7 +86,7 @@ public:
 
     static std::vector<std::string>& vectorForType(IconType type);
 
-    static std::string savedForType(IconType type, bool dual);
+    static std::string_view savedForType(IconType type, bool dual);
 
     static std::string activeForType(IconType type, bool dual) {
         auto savedType = savedForType(type, dual);
