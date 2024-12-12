@@ -344,7 +344,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         if (!dual) GameManager::get()->m_playerIconType = m_iconType;
         player->setScale(m_iconType == IconType::Jetpack ? 1.5f : 1.6f);
         auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
-        if (MoreIconsAPI::activeForType(m_iconType, dual) == name && selectedIconType == m_iconType) {
+        if (Mod::get()->setSavedValue(MoreIconsAPI::savedForType(m_iconType, dual), name) == name && selectedIconType == m_iconType) {
             auto& iconInfo = MoreIcons::infoForType(m_iconType)[name];
             auto iconID = 1;
             if (!iconInfo.id.empty()) switch (m_iconType) {
@@ -455,7 +455,7 @@ class $modify(MIGarageLayer, GJGarageLayer) {
         m_cursor1->setPosition(sender->getParent()->convertToWorldSpace(sender->getPosition()));
         m_cursor1->setVisible(true);
         auto selectedIconType = dual ? (IconType)sdi->getSavedValue("lasttype", 0) : m_selectedIconType;
-        if (MoreIconsAPI::activeForType(m_iconType, dual) == name && selectedIconType == m_iconType) {
+        if (Mod::get()->setSavedValue(MoreIconsAPI::savedForType(m_iconType, dual), name) == name && selectedIconType == m_iconType) {
             auto trailInfo = MoreIcons::TRAIL_INFO[name];
             auto popup = ItemInfoPopup::create(!trailInfo.pack.id.empty() ? 128 : 1, UnlockType::Cube);
             if (auto nameLabel = static_cast<CCLabelBMFont*>(popup->m_mainLayer->getChildByID("name-label")))

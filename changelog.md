@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.5.2 (2024-12-11)
+- Fixed a bug where selecting a new icon would not work properly in the icon kit
+
 ## v1.5.1 (2024-12-11)
 - Separated icon loading by icon type
 - Separated icons by texture pack in the icon kit ([#17](https://github.com/hiimjustin000/MoreIcons/issues/17))
