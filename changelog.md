@@ -1,4 +1,7 @@
 # More Icons Changelog
+## v1.5.3 (2024-12-24)
+- Fixed a bug where the game would crash when using a custom trail on macOS ([#18](https://github.com/hiimjustin000/MoreIcons/issues/18))
+
 ## v1.5.2 (2024-12-11)
 - Fixed a bug where selecting a new icon would not work properly in the icon kit
 
